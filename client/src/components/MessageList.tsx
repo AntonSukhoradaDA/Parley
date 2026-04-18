@@ -6,6 +6,9 @@ import { usePendingStore } from '@/store/pending'
 import { retryPending } from '@/lib/send-message'
 import { AttachmentView } from './AttachmentView'
 import type { AttachmentMeta } from '@/lib/attachments'
+import type { PendingMessage } from '@/store/pending'
+
+const EMPTY_PENDING: PendingMessage[] = []
 
 export interface ChatMessage {
   id: string
@@ -37,7 +40,7 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(true)
-  const pendingForRoom = usePendingStore((s) => s.byRoom[roomId] ?? [])
+  const pendingForRoom = usePendingStore((s) => s.byRoom[roomId]) ?? EMPTY_PENDING
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const wasAtBottom = useRef(true)
