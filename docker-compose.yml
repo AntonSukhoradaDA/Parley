@@ -16,6 +16,12 @@ services:
       timeout: 3s
       retries: 5
 
+  mailhog:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+
   server:
     build:
       context: ./server
@@ -23,11 +29,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql://parley:parley@db:5432/parley
       JWT_SECRET: ${JWT_SECRET:-parley-dev-secret-change-in-production}
       PORT: "3000"
       FILES_DIR: /var/parley/files
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      MAIL_FROM: ${MAIL_FROM:-Parley <noreply@parley.local>}
+      APP_URL: ${APP_URL:-http://localhost:8080}
     volumes:
       - uploads:/var/parley/files
 
