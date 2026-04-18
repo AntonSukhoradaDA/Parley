@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { useRoomsStore } from '@/store/rooms'
 import { logout } from '@/lib/auth'
+import { getSocket, disconnectSocket } from '@/lib/socket'
 import { RoomSidebar } from '@/components/RoomSidebar'
 import { CreateRoomModal } from '@/components/CreateRoomModal'
 import { PublicRoomsModal } from '@/components/PublicRoomsModal'
 import { ManageRoomModal } from '@/components/ManageRoomModal'
+import { MessageList, type ChatMessage } from '@/components/MessageList'
+import { MessageInput } from '@/components/MessageInput'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -16,15 +19,30 @@ export function ChatPage() {
   const [browseOpen, setBrowseOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
+  const [editMsg, setEditMsg] = useState<ChatMessage | null>(null)
 
   useEffect(() => {
     refresh()
   }, [refresh])
 
+  // Connect socket when authenticated
+  useEffect(() => {
+    const token = useAuthStore.getState().accessToken
+    if (token) getSocket()
+    return () => disconnectSocket()
+  }, [])
+
   const selected = useMemo(
     () => rooms.find((r) => r.id === selectedId) ?? null,
     [rooms, selectedId],
   )
+
+  // Clear reply/edit when switching rooms
+  useEffect(() => {
+    setReplyTo(null)
+    setEditMsg(null)
+  }, [selectedId])
 
   async function afterRoomChange(roomId?: string) {
     await refresh()
@@ -97,26 +115,26 @@ export function ChatPage() {
         <main className="flex-1 flex flex-col bg-ink min-w-0">
           {selected ? (
             <>
-              <div className="border-b border-hairline px-10 py-7 flex items-end justify-between gap-6">
+              <div className="border-b border-hairline px-10 py-5 flex items-end justify-between gap-6">
                 <div className="min-w-0">
-                  <div className="eyebrow mb-2 text-accent/80">
+                  <div className="eyebrow mb-1.5 text-accent/80">
                     {selected.visibility === 'public' ? 'Public room' : 'Private room'}
                     <span className="mx-2 text-mist">·</span>
                     your role: {selected.role}
                   </div>
-                  <h2 className="text-paper text-3xl font-medium tracking-tight leading-tight truncate">
+                  <h2 className="text-paper text-2xl font-medium tracking-tight leading-tight truncate">
                     <span className="text-accent mr-2 font-mono font-normal">
                       {selected.visibility === 'public' ? '#' : '◆'}
                     </span>
                     {selected.name}
                   </h2>
                   {selected.description && (
-                    <p className="mt-3 text-chalk/70 text-sm max-w-2xl leading-relaxed">
+                    <p className="mt-2 text-chalk/70 text-sm max-w-2xl leading-relaxed">
                       {selected.description}
                     </p>
                   )}
-                  <div className="mt-3 text-mist text-xs font-mono">
-                    {selected.memberCount} member{selected.memberCount === 1 ? '' : 's'} · in attendance
+                  <div className="mt-2 text-mist text-xs font-mono">
+                    {selected.memberCount} member{selected.memberCount === 1 ? '' : 's'}
                   </div>
                 </div>
                 <button
@@ -127,18 +145,20 @@ export function ChatPage() {
                   Manage room
                 </button>
               </div>
-              <div className="flex-1 grain relative flex flex-col items-center justify-center text-center px-8">
-                <div className="relative z-10 max-w-md">
-                  <div className="eyebrow mb-3 text-accent/70">Phase IV — forthcoming</div>
-                  <p className="text-paper text-2xl leading-snug font-medium tracking-tight">
-                    The thread waits.
-                  </p>
-                  <p className="mt-4 text-mist text-sm leading-relaxed">
-                    Messaging arrives in the next chapter — composition, replies,
-                    edits, attachments, and the long scroll of conversation.
-                  </p>
-                </div>
-              </div>
+
+              <MessageList
+                roomId={selected.id}
+                onReply={(msg) => { setReplyTo(msg); setEditMsg(null) }}
+                onEdit={(msg) => { setEditMsg(msg); setReplyTo(null) }}
+              />
+
+              <MessageInput
+                roomId={selected.id}
+                replyTo={replyTo}
+                editMsg={editMsg}
+                onCancelReply={() => setReplyTo(null)}
+                onCancelEdit={() => setEditMsg(null)}
+              />
             </>
           ) : (
             <EmptyChat onBrowse={() => setBrowseOpen(true)} onCreate={() => setCreateOpen(true)} />
@@ -198,7 +218,7 @@ function EmptyChat({
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <button type="button" onClick={onCreate} className="parley-button !w-auto !px-6">
-            New room →
+            New room
           </button>
           <button type="button" onClick={onBrowse} className="parley-button-ghost">
             Browse public rooms

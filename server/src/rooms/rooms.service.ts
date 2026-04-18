@@ -322,6 +322,14 @@ export class RoomsService {
     return this.ban(actorId, roomId, targetUserId);
   }
 
+  // ─── Public helpers (used by chat gateway) ───────────────
+
+  async getMembership(roomId: string, userId: string) {
+    return this.prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+  }
+
   // ─── Helpers ─────────────────────────────────────────────
 
   private async requireRoom(roomId: string) {
