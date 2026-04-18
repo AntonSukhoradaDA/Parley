@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Room } from '@/lib/rooms'
+import { usePresenceStore } from '@/store/presence'
 
 export function RoomSidebar({
   rooms,
@@ -152,6 +153,8 @@ function RoomItem({
   selected: boolean
   onSelect: (id: string) => void
 }) {
+  const unread = usePresenceStore((s) => s.unreadCounts[room.id] ?? 0)
+
   return (
     <button
       type="button"
@@ -177,10 +180,15 @@ function RoomItem({
       >
         {room.visibility === 'public' ? '#' : '◆'}
       </span>
-      <span className="truncate flex-1 text-[14px] tracking-tight">
+      <span className={`truncate flex-1 text-[14px] tracking-tight ${unread > 0 && !selected ? 'text-paper font-medium' : ''}`}>
         {room.name}
       </span>
-      {room.role !== 'member' && (
+      {unread > 0 && !selected && (
+        <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-ink text-[10px] font-mono font-bold px-1">
+          {unread > 99 ? '99+' : unread}
+        </span>
+      )}
+      {unread === 0 && room.role !== 'member' && (
         <span
           className={
             'text-[9.5px] font-mono uppercase tracking-wider ' +

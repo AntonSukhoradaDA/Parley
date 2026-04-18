@@ -3,12 +3,14 @@ import { useAuthStore } from '@/store/auth'
 import { useRoomsStore } from '@/store/rooms'
 import { logout } from '@/lib/auth'
 import { getSocket, disconnectSocket } from '@/lib/socket'
+import { usePresenceStore } from '@/store/presence'
 import { RoomSidebar } from '@/components/RoomSidebar'
 import { CreateRoomModal } from '@/components/CreateRoomModal'
 import { PublicRoomsModal } from '@/components/PublicRoomsModal'
 import { ManageRoomModal } from '@/components/ManageRoomModal'
 import { MessageList, type ChatMessage } from '@/components/MessageList'
 import { MessageInput } from '@/components/MessageInput'
+import { MemberPanel } from '@/components/MemberPanel'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -38,10 +40,14 @@ export function ChatPage() {
     [rooms, selectedId],
   )
 
-  // Clear reply/edit when switching rooms
+  // Clear reply/edit and unread when switching rooms
   useEffect(() => {
     setReplyTo(null)
     setEditMsg(null)
+    if (selectedId) {
+      usePresenceStore.getState().clearUnread(selectedId)
+      getSocket().emit('room:markRead', { roomId: selectedId })
+    }
   }, [selectedId])
 
   async function afterRoomChange(roomId?: string) {
@@ -164,6 +170,8 @@ export function ChatPage() {
             <EmptyChat onBrowse={() => setBrowseOpen(true)} onCreate={() => setCreateOpen(true)} />
           )}
         </main>
+
+        {selected && <MemberPanel roomId={selected.id} />}
       </div>
 
       <CreateRoomModal

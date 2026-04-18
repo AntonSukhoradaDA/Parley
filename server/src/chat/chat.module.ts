@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ChatGateway } from './chat.gateway';
+import { PresenceService } from './presence.service';
 import { MessagesModule } from '../messages/messages.module';
 import { RoomsModule } from '../rooms/rooms.module';
 
@@ -17,6 +18,7 @@ import { RoomsModule } from '../rooms/rooms.module';
     MessagesModule,
     RoomsModule,
   ],
-  providers: [ChatGateway],
+  providers: [ChatGateway, PresenceService],
+  exports: [PresenceService],
 })
 export class ChatModule {}
