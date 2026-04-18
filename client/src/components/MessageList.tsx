@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import { useAuthStore } from '@/store/auth'
+import { AttachmentView } from './AttachmentView'
+import type { AttachmentMeta } from '@/lib/attachments'
 
 export interface ChatMessage {
   id: string
@@ -12,6 +14,7 @@ export interface ChatMessage {
   replyToId: string | null
   sender: { id: string; username: string }
   replyTo: { id: string; content: string; sender: { id: string; username: string } } | null
+  attachments?: AttachmentMeta[]
 }
 
 interface HistoryResponse {
@@ -174,9 +177,18 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
                       <span className="text-mist/60 text-xs italic">edited</span>
                     )}
                   </div>
-                  <p className="text-chalk text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {msg.content}
-                  </p>
+                  {msg.content && (
+                    <p className="text-chalk text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      {msg.content}
+                    </p>
+                  )}
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-2">
+                      {msg.attachments.map((a) => (
+                        <AttachmentView key={a.id} attachment={a} />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}

@@ -87,10 +87,11 @@ model Room {
   ownerId     String?        @db.Uuid
   createdAt   DateTime       @default(now())
 
-  owner    User?        @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  members  RoomMember[]
-  bans     RoomBan[]
-  messages Message[]
+  owner       User?        @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  members     RoomMember[]
+  bans        RoomBan[]
+  messages    Message[]
+  attachments Attachment[]
 
   @@map("rooms")
 }
@@ -148,18 +149,22 @@ model Message {
 // ─── Attachments ─────────────────────────────────────────
 
 model Attachment {
-  id          String  @id @default(uuid()) @db.Uuid
-  messageId   String  @db.Uuid
-  uploaderId  String  @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  messageId   String?  @db.Uuid
+  uploaderId  String   @db.Uuid
+  roomId      String   @db.Uuid
   filename    String
   mimetype    String
   size        Int
   storagePath String
   comment     String?
+  createdAt   DateTime @default(now())
 
-  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  uploader User    @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  message  Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User     @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
+  @@index([roomId])
   @@map("attachments")
 }
 

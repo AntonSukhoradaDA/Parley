@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AttachmentsModule } from './attachments/attachments.module';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { FriendsModule } from './friends/friends.module';
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     FriendsModule,
     RoomsModule,
     MessagesModule,
+    AttachmentsModule,
     ChatModule,
   ],
 })

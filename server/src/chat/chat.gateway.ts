@@ -122,7 +122,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('message:send')
   async onSend(
     @ConnectedSocket() client: AuthSocket,
-    @MessageBody() data: { roomId: string; content: string; replyToId?: string },
+    @MessageBody() data: { roomId: string; content: string; replyToId?: string; attachmentIds?: string[] },
   ) {
     const membership = await this.rooms.getMembership(data.roomId, client.userId);
     if (!membership) return { error: 'Not a member of this room' };
@@ -133,6 +133,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.userId,
         data.content,
         data.replyToId,
+        data.attachmentIds ?? [],
       );
       this.server.to(`room:${data.roomId}`).emit('message:new', message);
 

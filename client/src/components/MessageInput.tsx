@@ -1,5 +1,11 @@
 import { useRef, useState } from 'react'
 import { getSocket } from '@/lib/socket'
+import {
+  formatSize,
+  isImageMime,
+  uploadAttachment,
+  type AttachmentMeta,
+} from '@/lib/attachments'
 import type { ChatMessage } from './MessageList'
 
 interface Props {
@@ -12,20 +18,47 @@ interface Props {
 
 export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancelEdit }: Props) {
   const [text, setText] = useState('')
+  const [attachments, setAttachments] = useState<AttachmentMeta[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // When entering edit mode, populate with existing content
   if (editMsg && text === '') {
     setText(editMsg.content)
   }
 
+  async function handleFiles(files: FileList | File[]) {
+    const list = Array.from(files)
+    if (list.length === 0) return
+    setError(null)
+    setUploading(true)
+    try {
+      for (const file of list) {
+        const meta = await uploadAttachment(roomId, file)
+        setAttachments((prev) => [...prev, meta])
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id))
+  }
+
   function send() {
     const content = text.trim()
-    if (!content) return
+    if (!content && attachments.length === 0 && !editMsg) return
 
     const socket = getSocket()
 
     if (editMsg) {
+      if (!content) return
       socket.emit('message:edit', { messageId: editMsg.id, content, roomId })
       onCancelEdit()
     } else {
@@ -33,11 +66,14 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
         roomId,
         content,
         ...(replyTo ? { replyToId: replyTo.id } : {}),
+        ...(attachments.length ? { attachmentIds: attachments.map((a) => a.id) } : {}),
       })
       onCancelReply()
+      setAttachments([])
     }
 
     setText('')
+    setError(null)
     textareaRef.current?.focus()
   }
 
@@ -52,6 +88,25 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
       setText('')
     }
   }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    if (editMsg) return
+    const files: File[] = []
+    for (const item of e.clipboardData.items) {
+      if (item.kind === 'file') {
+        const f = item.getAsFile()
+        if (f) files.push(f)
+      }
+    }
+    if (files.length) {
+      e.preventDefault()
+      handleFiles(files)
+    }
+  }
+
+  const disabledSend =
+    uploading ||
+    (editMsg ? !text.trim() : !text.trim() && attachments.length === 0)
 
   return (
     <div className="border-t border-hairline bg-vellum">
@@ -77,12 +132,63 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
         </div>
       )}
 
+      {/* Attachment chips */}
+      {!editMsg && attachments.length > 0 && (
+        <div className="px-8 pt-3 flex flex-wrap gap-2">
+          {attachments.map((a) => (
+            <div
+              key={a.id}
+              className="flex items-center gap-2 bg-slate/50 border border-hairline rounded px-2.5 py-1 text-xs"
+            >
+              <span className="text-mist">{isImageMime(a.mimetype) ? '🖼' : '📎'}</span>
+              <span className="text-chalk max-w-[180px] truncate">{a.filename}</span>
+              <span className="text-mist/70 font-mono">{formatSize(a.size)}</span>
+              <button
+                type="button"
+                onClick={() => removeAttachment(a.id)}
+                className="text-mist hover:text-rust ml-1"
+                title="Remove"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <div className="px-8 pt-2 text-xs text-rust">{error}</div>
+      )}
+
       <div className="flex items-end gap-3 px-8 py-4">
+        {!editMsg && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) handleFiles(e.target.files)
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              title="Attach file"
+              className="shrink-0 w-10 h-10 rounded-md border border-hairline-strong bg-slate/50 text-mist hover:text-accent hover:border-accent/50 transition-colors flex items-center justify-center"
+            >
+              {uploading ? '…' : '📎'}
+            </button>
+          </>
+        )}
         <textarea
           ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Write a message... (Enter to send, Shift+Enter for new line)"
           rows={1}
           className="flex-1 bg-slate/50 text-paper text-sm border border-hairline-strong rounded-md px-4 py-2.5 resize-none outline-none focus:border-accent/50 transition-colors placeholder:text-mist"
@@ -96,7 +202,7 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
         <button
           type="button"
           onClick={send}
-          disabled={!text.trim()}
+          disabled={disabledSend}
           className="parley-button !w-auto !px-5 !py-2.5 shrink-0"
         >
           {editMsg ? 'Save' : 'Send'}

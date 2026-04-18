@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, RoomMemberRole, RoomVisibility } from '@prisma/client';
+import { unlinkSync } from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomDto, UpdateRoomDto } from './dto/create-room.dto';
 
@@ -144,7 +145,14 @@ export class RoomsService {
     if (room.ownerId !== userId) {
       throw new ForbiddenException('Only the owner can delete this room');
     }
+    const attachments = await this.prisma.attachment.findMany({
+      where: { roomId },
+      select: { storagePath: true },
+    });
     await this.prisma.room.delete({ where: { id: roomId } });
+    for (const a of attachments) {
+      try { unlinkSync(a.storagePath); } catch { /* ignore */ }
+    }
   }
 
   async join(userId: string, roomId: string) {

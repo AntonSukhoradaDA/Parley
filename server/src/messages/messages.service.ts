@@ -24,17 +24,32 @@ const MESSAGE_SELECT = {
       sender: { select: { id: true, username: true } },
     },
   },
+  attachments: {
+    select: {
+      id: true,
+      filename: true,
+      mimetype: true,
+      size: true,
+      comment: true,
+    },
+  },
 } as const;
 
 @Injectable()
 export class MessagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async send(roomId: string, senderId: string, content: string, replyToId?: string) {
+  async send(
+    roomId: string,
+    senderId: string,
+    content: string,
+    replyToId?: string,
+    attachmentIds: string[] = [],
+  ) {
     if (Buffer.byteLength(content, 'utf8') > MAX_MESSAGE_BYTES) {
       throw new BadRequestException('Message exceeds 3 KB limit');
     }
-    if (!content.trim()) {
+    if (!content.trim() && attachmentIds.length === 0) {
       throw new BadRequestException('Message cannot be empty');
     }
 
@@ -45,9 +60,44 @@ export class MessagesService {
       }
     }
 
-    return this.prisma.message.create({
-      data: { roomId, senderId, content, replyToId },
-      select: MESSAGE_SELECT,
+    if (attachmentIds.length) {
+      const found = await this.prisma.attachment.findMany({
+        where: { id: { in: attachmentIds } },
+        select: { id: true, uploaderId: true, roomId: true, messageId: true },
+      });
+      if (found.length !== attachmentIds.length) {
+        throw new BadRequestException('Attachment not found');
+      }
+      for (const a of found) {
+        if (a.uploaderId !== senderId) {
+          throw new BadRequestException('Cannot use another user\'s attachment');
+        }
+        if (a.roomId !== roomId) {
+          throw new BadRequestException('Attachment does not belong to this room');
+        }
+        if (a.messageId) {
+          throw new BadRequestException('Attachment already linked');
+        }
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: { roomId, senderId, content, replyToId },
+        select: MESSAGE_SELECT,
+      });
+      if (attachmentIds.length) {
+        await tx.attachment.updateMany({
+          where: { id: { in: attachmentIds }, messageId: null, uploaderId: senderId },
+          data: { messageId: message.id },
+        });
+        const attachments = await tx.attachment.findMany({
+          where: { messageId: message.id },
+          select: { id: true, filename: true, mimetype: true, size: true, comment: true },
+        });
+        return { ...message, attachments };
+      }
+      return message;
     });
   }
 
