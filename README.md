@@ -1,4 +1,4 @@
-# 💬 Parley
+# Parley
 
 > A classic self-hosted web chat server — rooms, direct messages, file sharing, and optional XMPP federation.
 
@@ -26,14 +26,14 @@ Parley is a classic web-based chat application in the spirit of early online cha
 
 ## Features
 
-### 👤 Accounts & Sessions
+### Accounts & Sessions
 - Self-registration with email, username, and password
 - Persistent login across browser restarts
 - Multi-session support — view and revoke active sessions individually
 - Secure password hashing, password reset, and password change
 - Self-service account deletion
 
-### 💬 Messaging
+### Messaging
 - Public and private chat rooms
 - One-to-one personal messaging
 - Message replies with visual quoting
@@ -43,35 +43,35 @@ Parley is a classic web-based chat application in the spirit of early online cha
 - Full message history with **infinite scroll**
 - Messages to offline users are persisted and delivered on reconnect
 
-### 📎 Attachments
+### Attachments
 - Upload files and images via button or copy-paste
 - Original filename preserved
 - Optional comment on each attachment
 - Files up to **20 MB**, images up to **3 MB**
 - Access scoped to current room members only
 
-### 👥 Contacts & Friends
+### Contacts & Friends
 - Personal friend list
 - Send friend requests by username or from a room's member list
 - Confirm, decline, or remove friends
 - User-to-user ban (blocks new DMs; existing history becomes read-only)
 
-### 🛡️ Moderation
+### Moderation
 - Room owner + admins model
 - Admins can delete messages, remove members, ban users, manage the ban list
 - Owner can delete the room and remove admins
 - Removing a user from a room counts as a ban
 
-### 🟢 Presence
+### Presence
 - **Online / AFK / Offline** statuses
 - Multi-tab aware — AFK only triggers when *all* tabs are idle > 1 minute
 - Low-latency presence updates (< 2 seconds)
 
-### 🔔 Notifications
+### Notifications
 - Unread indicators on rooms and contacts
 - Cleared when the chat is opened
 
-### 🌐 Optional: XMPP / Jabber Federation
+### Optional: XMPP / Jabber Federation
 - Connect with any standard Jabber client
 - Server-to-server federation — Parley instances can talk to each other
 - Admin dashboards for connections and federation traffic
@@ -121,11 +121,11 @@ docker compose down -v
 | # engineering-room                                    | Room info              |
 | [10:21] Bob: Hello team                               | Owner: alice           |
 | [10:22] Alice: Uploading spec                         | Members (38)           |
-| [10:25] Carol replied to Bob:                         | ● Alice                |
-|   > Hello team                                        | ● Bob                  |
-|   Can we make this private?                           | ◐ Carol (AFK)          |
+| [10:25] Carol replied to Bob:                         | o Alice    (online)    |
+|   > Hello team                                        | o Bob      (online)    |
+|   Can we make this private?                           | - Carol    (AFK)       |
 +-------------------------------------------------------+------------------------+
-| [😊] [📎] [Replying to: Bob ×]  [ Type a message... ]              [ Send ]     |
+| [emoji] [attach] [Replying to: Bob x]  [ Type a message... ]       [ Send ]     |
 +----------------------------------------------------------------------------------+
 ```
 

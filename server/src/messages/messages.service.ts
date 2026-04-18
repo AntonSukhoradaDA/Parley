@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PersonalChatsService } from '../personal-chats/personal-chats.service';
 
 const MAX_MESSAGE_BYTES = 3072; // 3 KB
 const PAGE_SIZE = 50;
@@ -37,7 +38,17 @@ const MESSAGE_SELECT = {
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly personalChats: PersonalChatsService,
+  ) {}
+
+  private async assertNotFrozen(roomId: string) {
+    if (!(await this.personalChats.isPersonalRoom(roomId))) return;
+    if (await this.personalChats.checkBanBetweenMembers(roomId)) {
+      throw new ForbiddenException('This conversation is frozen due to a block');
+    }
+  }
 
   async send(
     roomId: string,
@@ -59,6 +70,8 @@ export class MessagesService {
         throw new BadRequestException('Replied message not found in this room');
       }
     }
+
+    await this.assertNotFrozen(roomId);
 
     if (attachmentIds.length) {
       const found = await this.prisma.attachment.findMany({
@@ -112,6 +125,8 @@ export class MessagesService {
     const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
     if (!msg) throw new NotFoundException('Message not found');
     if (msg.senderId !== userId) throw new ForbiddenException('You can only edit your own messages');
+
+    await this.assertNotFrozen(msg.roomId);
 
     return this.prisma.message.update({
       where: { id: messageId },

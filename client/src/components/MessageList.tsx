@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import { useAuthStore } from '@/store/auth'
+import { usePendingStore } from '@/store/pending'
+import { retryPending } from '@/lib/send-message'
 import { AttachmentView } from './AttachmentView'
 import type { AttachmentMeta } from '@/lib/attachments'
 
@@ -34,6 +36,8 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadingInitial, setLoadingInitial] = useState(true)
+  const pendingForRoom = usePendingStore((s) => s.byRoom[roomId] ?? [])
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const wasAtBottom = useRef(true)
@@ -43,13 +47,16 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
     setMessages([])
     setCursor(null)
     setHasMore(true)
-    api<HistoryResponse>(`/api/rooms/${roomId}/messages`).then((data) => {
-      setMessages(data.messages)
-      setCursor(data.nextCursor)
-      setHasMore(!!data.nextCursor)
-      // scroll to bottom on initial load
-      setTimeout(() => bottomRef.current?.scrollIntoView(), 50)
-    })
+    setLoadingInitial(true)
+    api<HistoryResponse>(`/api/rooms/${roomId}/messages`)
+      .then((data) => {
+        setMessages(data.messages)
+        setCursor(data.nextCursor)
+        setHasMore(!!data.nextCursor)
+        // scroll to bottom on initial load
+        setTimeout(() => bottomRef.current?.scrollIntoView(), 50)
+      })
+      .finally(() => setLoadingInitial(false))
   }, [roomId])
 
   // Socket listeners
@@ -141,7 +148,21 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
         </div>
       )}
 
-      {messages.length === 0 && (
+      {loadingInitial && messages.length === 0 && (
+        <div className="space-y-3 px-3 py-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex items-start gap-2.5 animate-pulse">
+              <div className="w-7 h-7 rounded-full bg-slate/70 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-slate/70 rounded w-24" />
+                <div className={`h-3 bg-slate/50 rounded ${i % 2 === 0 ? 'w-3/4' : 'w-1/2'}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loadingInitial && messages.length === 0 && pendingForRoom.length === 0 && (
         <div className="flex items-center justify-center h-full text-mist text-sm">
           No messages yet. Start the conversation.
         </div>
@@ -226,6 +247,62 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
             </div>
           )
         })}
+
+        {pendingForRoom.map((p) => (
+          <div key={p.tempId} className="group py-1.5 px-3 -mx-3 rounded hover:bg-slate/30">
+            {p.replyToSender && (
+              <div className="flex items-center gap-1.5 mb-1 pl-3 border-l-2 border-accent/30">
+                <span className="text-accent/60 text-xs font-mono">{p.replyToSender}</span>
+                <span className="text-mist text-xs truncate max-w-xs">{p.replyToContent}</span>
+              </div>
+            )}
+            <div className="flex items-start gap-2.5">
+              <span className="w-7 h-7 rounded-full bg-slate border border-hairline flex items-center justify-center text-xs font-mono text-mist uppercase shrink-0 mt-0.5">
+                {p.sender.username.charAt(0)}
+              </span>
+              <div className={`flex-1 min-w-0 ${p.status === 'sending' ? 'opacity-60' : ''}`}>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-medium text-accent">{p.sender.username}</span>
+                  <span className="text-mist text-xs font-mono">
+                    {p.status === 'sending' ? 'sending…' : (
+                      <span className="text-rust">failed{p.error ? `: ${p.error}` : ''}</span>
+                    )}
+                  </span>
+                </div>
+                {p.content && (
+                  <p className="text-chalk text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {p.content}
+                  </p>
+                )}
+                {p.attachments.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {p.attachments.map((a) => (
+                      <AttachmentView key={a.id} attachment={a} />
+                    ))}
+                  </div>
+                )}
+                {p.status === 'failed' && (
+                  <div className="mt-1 flex gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => retryPending(p)}
+                      className="text-accent hover:underline font-mono"
+                    >
+                      retry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => usePendingStore.getState().remove(p.tempId, roomId)}
+                      className="text-mist hover:text-rust font-mono"
+                    >
+                      discard
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div ref={bottomRef} />

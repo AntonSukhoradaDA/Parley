@@ -2,10 +2,13 @@ import { useRef, useState } from 'react'
 import { getSocket } from '@/lib/socket'
 import {
   formatSize,
-  isImageMime,
   uploadAttachment,
   type AttachmentMeta,
 } from '@/lib/attachments'
+import { sendMessageWithRetry } from '@/lib/send-message'
+import { usePendingStore } from '@/store/pending'
+import { useAuthStore } from '@/store/auth'
+import { PaperclipIcon } from './icons'
 import type { ChatMessage } from './MessageList'
 
 interface Props {
@@ -55,18 +58,32 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
     const content = text.trim()
     if (!content && attachments.length === 0 && !editMsg) return
 
-    const socket = getSocket()
-
     if (editMsg) {
       if (!content) return
-      socket.emit('message:edit', { messageId: editMsg.id, content, roomId })
+      getSocket().emit('message:edit', { messageId: editMsg.id, content, roomId })
       onCancelEdit()
     } else {
-      socket.emit('message:send', {
+      const user = useAuthStore.getState().user
+      if (!user) return
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      usePendingStore.getState().add({
+        tempId,
         roomId,
         content,
-        ...(replyTo ? { replyToId: replyTo.id } : {}),
-        ...(attachments.length ? { attachmentIds: attachments.map((a) => a.id) } : {}),
+        replyToId: replyTo?.id,
+        replyToSender: replyTo?.sender.username,
+        replyToContent: replyTo?.content,
+        attachments: [...attachments],
+        status: 'sending',
+        createdAt: new Date().toISOString(),
+        sender: { id: user.id, username: user.username },
+      })
+      sendMessageWithRetry({
+        tempId,
+        roomId,
+        content,
+        replyToId: replyTo?.id,
+        attachmentIds: attachments.map((a) => a.id),
       })
       onCancelReply()
       setAttachments([])
@@ -140,7 +157,7 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
               key={a.id}
               className="flex items-center gap-2 bg-slate/50 border border-hairline rounded px-2.5 py-1 text-xs"
             >
-              <span className="text-mist">{isImageMime(a.mimetype) ? '🖼' : '📎'}</span>
+              <PaperclipIcon className="w-3.5 h-3.5 text-mist shrink-0" />
               <span className="text-chalk max-w-[180px] truncate">{a.filename}</span>
               <span className="text-mist/70 font-mono">{formatSize(a.size)}</span>
               <button
@@ -179,7 +196,11 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
               title="Attach file"
               className="shrink-0 w-10 h-10 rounded-md border border-hairline-strong bg-slate/50 text-mist hover:text-accent hover:border-accent/50 transition-colors flex items-center justify-center"
             >
-              {uploading ? '…' : '📎'}
+              {uploading ? (
+                <span className="text-xs font-mono">…</span>
+              ) : (
+                <PaperclipIcon className="w-4 h-4" />
+              )}
             </button>
           </>
         )}

@@ -12,12 +12,14 @@ import { MessageList, type ChatMessage } from '@/components/MessageList'
 import { MessageInput } from '@/components/MessageInput'
 import { MemberPanel } from '@/components/MemberPanel'
 import { ContactsPanel } from '@/components/ContactsPanel'
+import { ProfileModal } from '@/components/ProfileModal'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { listRequests } from '@/lib/friends'
 
 export function ChatPage() {
   const user = useAuthStore((s) => s.user)
-  const { rooms, selectedId, loading, refresh, select } = useRoomsStore()
+  const { rooms, personalChats, selectedId, loading, refresh, select } = useRoomsStore()
   const [createOpen, setCreateOpen] = useState(false)
   const [browseOpen, setBrowseOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
@@ -25,6 +27,22 @@ export function ChatPage() {
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [editMsg, setEditMsg] = useState<ChatMessage | null>(null)
   const [contactsOpen, setContactsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileTab, setProfileTab] = useState<'password' | 'sessions' | 'bans' | 'danger'>('password')
+  const [incomingRequests, setIncomingRequests] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const r = await listRequests()
+        if (!cancelled) setIncomingRequests(r.incoming.length)
+      } catch { /* ignore */ }
+    }
+    load()
+    const interval = setInterval(load, 30000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [contactsOpen])
 
   useEffect(() => {
     refresh()
@@ -40,6 +58,10 @@ export function ChatPage() {
   const selected = useMemo(
     () => rooms.find((r) => r.id === selectedId) ?? null,
     [rooms, selectedId],
+  )
+  const selectedPersonal = useMemo(
+    () => personalChats.find((c) => c.id === selectedId) ?? null,
+    [personalChats, selectedId],
   )
 
   // Clear reply/edit and unread when switching rooms
@@ -66,9 +88,14 @@ export function ChatPage() {
           <button
             type="button"
             onClick={() => setContactsOpen(true)}
-            className="parley-button-ghost !py-1.5 !px-3 !text-xs"
+            className="parley-button-ghost !py-1.5 !px-3 !text-xs relative"
           >
             Contacts
+            {incomingRequests > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-accent text-ink text-[9px] font-mono font-bold px-1">
+                {incomingRequests}
+              </span>
+            )}
           </button>
           <ThemeToggle />
           <span className="w-px h-5 bg-hairline-strong" aria-hidden />
@@ -99,16 +126,43 @@ export function ChatPage() {
                   <div className="eyebrow text-accent/80 mb-0.5">Account</div>
                   <div className="text-sm text-paper truncate">{user?.email}</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    logout()
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-bone hover:bg-slate hover:text-paper transition-colors"
-                >
-                  Sign out
-                </button>
+                {(['password', 'sessions', 'bans'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setProfileTab(t)
+                      setProfileOpen(true)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-bone hover:bg-slate hover:text-paper transition-colors"
+                  >
+                    {t === 'password' ? 'Change password' : t === 'sessions' ? 'Active sessions' : 'Blocked users'}
+                  </button>
+                ))}
+                <div className="border-t border-hairline mt-1 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setProfileTab('danger')
+                      setProfileOpen(true)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-rust/80 hover:bg-slate hover:text-rust transition-colors"
+                  >
+                    Delete account…
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      logout()
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-bone hover:bg-slate hover:text-paper transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -120,6 +174,7 @@ export function ChatPage() {
       <div className="flex-1 flex min-h-0">
         <RoomSidebar
           rooms={rooms}
+          personalChats={personalChats}
           selectedId={selectedId}
           onSelect={select}
           onCreate={() => setCreateOpen(true)}
@@ -175,6 +230,45 @@ export function ChatPage() {
                 onCancelEdit={() => setEditMsg(null)}
               />
             </>
+          ) : selectedPersonal ? (
+            <>
+              <div className="border-b border-hairline px-10 py-5 flex items-end justify-between gap-6">
+                <div className="min-w-0">
+                  <div className="eyebrow mb-1.5 text-accent/80">Direct message</div>
+                  <h2 className="text-paper text-2xl font-medium tracking-tight leading-tight truncate">
+                    <span className="text-accent mr-2 font-mono font-normal">@</span>
+                    {selectedPersonal.partner.username}
+                  </h2>
+                  {selectedPersonal.frozen && (
+                    <p className="mt-2 text-rust/80 text-sm">
+                      {selectedPersonal.frozenByMe
+                        ? 'You have blocked this user — conversation is read-only.'
+                        : 'This conversation is frozen — you cannot send new messages.'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <MessageList
+                roomId={selectedPersonal.id}
+                onReply={(msg) => { setReplyTo(msg); setEditMsg(null) }}
+                onEdit={(msg) => { setEditMsg(msg); setReplyTo(null) }}
+              />
+
+              {selectedPersonal.frozen ? (
+                <div className="border-t border-hairline bg-vellum px-8 py-4 text-xs text-mist text-center">
+                  Messaging is disabled while one of you has blocked the other.
+                </div>
+              ) : (
+                <MessageInput
+                  roomId={selectedPersonal.id}
+                  replyTo={replyTo}
+                  editMsg={editMsg}
+                  onCancelReply={() => setReplyTo(null)}
+                  onCancelEdit={() => setEditMsg(null)}
+                />
+              )}
+            </>
           ) : (
             <EmptyChat onBrowse={() => setBrowseOpen(true)} onCreate={() => setCreateOpen(true)} />
           )}
@@ -212,6 +306,11 @@ export function ChatPage() {
       <ContactsPanel
         open={contactsOpen}
         onClose={() => setContactsOpen(false)}
+      />
+      <ProfileModal
+        open={profileOpen}
+        initialTab={profileTab}
+        onClose={() => setProfileOpen(false)}
       />
     </div>
   )

@@ -12,6 +12,9 @@ import {
 } from '@/lib/friends'
 import { usePresenceStore, type PresenceStatus } from '@/store/presence'
 import { ApiError } from '@/lib/api'
+import { openPersonalChat } from '@/lib/personal-chats'
+import { useRoomsStore } from '@/store/rooms'
+import { getSocket } from '@/lib/socket'
 import { Modal } from './Modal'
 
 export function ContactsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -75,7 +78,7 @@ export function ContactsPanel({ open, onClose }: { open: boolean; onClose: () =>
       {loading && <div className="text-xs text-mist font-mono">loading…</div>}
 
       {!loading && tab === 'friends' && (
-        <FriendsTab friends={friends} statuses={statuses} onAction={load} setError={setError} />
+        <FriendsTab friends={friends} statuses={statuses} onAction={load} setError={setError} onClose={onClose} />
       )}
       {!loading && tab === 'requests' && (
         <RequestsTab requests={requests} onAction={load} setError={setError} />
@@ -92,13 +95,31 @@ function FriendsTab({
   statuses,
   onAction,
   setError,
+  onClose,
 }: {
   friends: Friend[]
   statuses: Record<string, PresenceStatus>
   onAction: () => void
   setError: (e: string | null) => void
+  onClose: () => void
 }) {
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  async function handleMessage(userId: string) {
+    setBusyId(userId)
+    setError(null)
+    try {
+      const chat = await openPersonalChat(userId)
+      useRoomsStore.getState().upsertPersonalChat(chat)
+      getSocket().emit('room:join', { roomId: chat.id })
+      useRoomsStore.getState().select(chat.id)
+      onClose()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to open chat')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   if (friends.length === 0) {
     return (
@@ -130,6 +151,7 @@ function FriendsTab({
     try {
       await banUser(userId)
       onAction()
+      useRoomsStore.getState().refresh()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed')
     } finally {
@@ -154,23 +176,33 @@ function FriendsTab({
               <div className="text-paper text-sm font-medium tracking-tight truncate">{f.username}</div>
               <div className="eyebrow">{status}</div>
             </div>
-            <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 disabled={busyId === f.userId}
-                onClick={() => handleRemove(f.userId)}
-                className="text-[10px] text-mist hover:text-rust font-mono"
+                onClick={() => handleMessage(f.userId)}
+                className="parley-button-ghost !py-1 !px-2.5 !text-[11px]"
               >
-                remove
+                Message
               </button>
-              <button
-                type="button"
-                disabled={busyId === f.userId}
-                onClick={() => handleBan(f.userId)}
-                className="text-[10px] text-mist hover:text-rust font-mono"
-              >
-                ban
-              </button>
+              <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+                <button
+                  type="button"
+                  disabled={busyId === f.userId}
+                  onClick={() => handleRemove(f.userId)}
+                  className="text-[10px] text-mist hover:text-rust font-mono"
+                >
+                  remove
+                </button>
+                <button
+                  type="button"
+                  disabled={busyId === f.userId}
+                  onClick={() => handleBan(f.userId)}
+                  className="text-[10px] text-mist hover:text-rust font-mono"
+                >
+                  ban
+                </button>
+              </div>
             </div>
           </li>
         )
