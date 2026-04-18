@@ -289,7 +289,7 @@ Cross-check against `INSTRUCTIONS.md`. Status markers: `[done]`, `[partial]`, `[
 | 6 — Contacts & friends             | Done      | Friend requests, user-to-user ban                                     |
 | 7 — File & image attachments       | Done      | Upload, download, limits, inline previews, room-delete cleanup        |
 | 8 — Notifications & polish         | Done      | Unread badges, profile menu, optimistic send + retry, skeleton loaders|
-| 9 — Docker & deployment polish     | Done      | `docker compose up` brings everything up; migrations auto-apply       |
+| 9 — Docker & deployment polish     | Done      | `docker compose up` brings everything up healthy; migrations auto-apply; `.env.example` documents all vars |
 | 10 — XMPP federation (optional)    | Not done  | Optional scope, not started                                           |
 
 ### Phase 8 detail
