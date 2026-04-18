@@ -1,9 +1,16 @@
-
 # dependencies
-/node_modules
+node_modules/
+
+# build output
+dist/
+generated/
+
+# environment
+.env
+.env.local
 
 # testing
-/coverage
+coverage/
 
 # debug
 npm-debug.log*
@@ -12,7 +19,13 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-.env
 
-#IntelliJ
-.idea
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# uploads (local dev)
+uploads/
