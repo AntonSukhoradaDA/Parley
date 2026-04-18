@@ -11,6 +11,7 @@ import { ManageRoomModal } from '@/components/ManageRoomModal'
 import { MessageList, type ChatMessage } from '@/components/MessageList'
 import { MessageInput } from '@/components/MessageInput'
 import { MemberPanel } from '@/components/MemberPanel'
+import { ContactsPanel } from '@/components/ContactsPanel'
 import { Logo } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -23,6 +24,7 @@ export function ChatPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const [editMsg, setEditMsg] = useState<ChatMessage | null>(null)
+  const [contactsOpen, setContactsOpen] = useState(false)
 
   useEffect(() => {
     refresh()
@@ -61,6 +63,13 @@ export function ChatPage() {
       <header className="flex items-center justify-between px-6 py-3 border-b border-hairline bg-ink">
         <Logo />
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setContactsOpen(true)}
+            className="parley-button-ghost !py-1.5 !px-3 !text-xs"
+          >
+            Contacts
+          </button>
           <ThemeToggle />
           <span className="w-px h-5 bg-hairline-strong" aria-hidden />
           <div className="relative">
@@ -199,6 +208,10 @@ export function ChatPage() {
           select(null)
           refresh()
         }}
+      />
+      <ContactsPanel
+        open={contactsOpen}
+        onClose={() => setContactsOpen(false)}
       />
     </div>
   )
