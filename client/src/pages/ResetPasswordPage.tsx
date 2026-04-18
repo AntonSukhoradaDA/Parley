@@ -42,16 +42,21 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <AuthCard title="Password updated">
-        <p className="text-sm text-gray-600">
-          You can now sign in with your new password. Redirecting…
+      <AuthCard eyebrow="Settled" title="Password updated">
+        <p className="text-chalk/80 leading-relaxed">
+          You can now sign in with your new password. Sending you back to the
+          door…
         </p>
       </AuthCard>
     )
   }
 
   return (
-    <AuthCard title="Reset password" subtitle="Choose a new password for your account.">
+    <AuthCard
+      eyebrow="Recover — 02"
+      title="Reset password"
+      subtitle="Choose something you'll remember."
+    >
       <form onSubmit={onSubmit} noValidate>
         {!params.get('token') && (
           <FormField label="Reset token">
@@ -60,11 +65,12 @@ export function ResetPasswordPage() {
               className={inputClass}
               value={token}
               onChange={(e) => setToken(e.target.value)}
+              placeholder="paste the token from your email"
               required
             />
           </FormField>
         )}
-        <FormField label="New password">
+        <FormField label="New password" hint="8 or more">
           <input
             type="password"
             className={inputClass}
@@ -87,16 +93,19 @@ export function ResetPasswordPage() {
           />
         </FormField>
         {error && (
-          <div className="text-sm text-red-600 mb-3" role="alert">
+          <div
+            className="text-sm text-rust mb-4 font-mono border-l-2 border-rust pl-3 py-1"
+            role="alert"
+          >
             {error}
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Updating…' : 'Update password'}
+          {submitting ? 'Updating…' : 'Update password →'}
         </button>
       </form>
-      <p className="text-center text-sm text-gray-500 mt-4">
-        <Link className="text-blue-600 hover:underline" to="/login">
+      <p className="mt-8 pt-6 border-t border-hairline text-sm text-mist">
+        <Link className="parley-link" to="/login">
           Back to sign in
         </Link>
       </p>

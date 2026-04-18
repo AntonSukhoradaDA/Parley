@@ -29,12 +29,14 @@ export function ForgotPasswordPage() {
 
   if (done) {
     return (
-      <AuthCard title="Check your inbox">
-        <p className="text-sm text-gray-600 mb-4">
-          If an account exists for <span className="font-medium">{email}</span>, a
-          password reset link has been sent. The link is valid for 30 minutes.
+      <AuthCard eyebrow="Dispatched" title="Check the post">
+        <p className="text-chalk/80 leading-relaxed mb-6">
+          If an account exists for{' '}
+          <span className="text-paper font-medium">{email}</span>, a
+          reset link is already on its way. The link is good for{' '}
+          <span className="font-mono text-paper">30 minutes</span>.
         </p>
-        <Link to="/login" className="text-sm text-blue-600 hover:underline">
+        <Link to="/login" className="parley-link text-sm">
           Back to sign in
         </Link>
       </AuthCard>
@@ -42,7 +44,11 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthCard title="Forgot password" subtitle="We'll email you a reset link.">
+    <AuthCard
+      eyebrow="Recover — 01"
+      title="Forgot password"
+      subtitle="Tell us where to send the reset link."
+    >
       <form onSubmit={onSubmit} noValidate>
         <FormField label="Email">
           <input
@@ -51,20 +57,24 @@ export function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
+            placeholder="you@somewhere.tld"
             required
           />
         </FormField>
         {error && (
-          <div className="text-sm text-red-600 mb-3" role="alert">
+          <div
+            className="text-sm text-rust mb-4 font-mono border-l-2 border-rust pl-3 py-1"
+            role="alert"
+          >
             {error}
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Sending…' : 'Send reset link'}
+          {submitting ? 'Sending…' : 'Send reset link →'}
         </button>
       </form>
-      <p className="text-center text-sm text-gray-500 mt-4">
-        <Link className="text-blue-600 hover:underline" to="/login">
+      <p className="mt-8 pt-6 border-t border-hairline text-sm text-mist">
+        <Link className="parley-link" to="/login">
           Back to sign in
         </Link>
       </p>

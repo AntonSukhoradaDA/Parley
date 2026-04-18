@@ -1,1 +1,397 @@
 @import 'tailwindcss';
+
+@theme {
+  /* ─── Color (token names; values come from :root rules below) ─────── */
+  --color-ink: #0a0e0d;
+  --color-vellum: #12181a;
+  --color-slate: #1c2326;
+  --color-stone: #2a3236;
+  --color-mist: #6b7572;
+  --color-bone: #a9b0ad;
+  --color-chalk: #d6d3c8;
+  --color-paper: #f2ebdd;
+  --color-accent: #5bcfa8;
+  --color-accent-deep: #2f9b7c;
+  --color-rust: #e07a64;
+  --color-moss: #7fa680;
+  --color-hairline: rgb(255 255 255 / 0.09);
+  --color-hairline-strong: rgb(255 255 255 / 0.16);
+
+  /* ─── Font ─────────────────────────────────────────── */
+  --font-display: 'Instrument Serif', 'Times New Roman', serif;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ─── Radius ───────────────────────────────────────── */
+  --radius-soft: 4px;
+}
+
+/* ─── Themes ─────────────────────────────────────────── */
+:root,
+[data-theme='dark'] {
+  --color-ink: #0a0e0d;
+  --color-vellum: #12181a;
+  --color-slate: #1c2326;
+  --color-stone: #2a3236;
+  --color-mist: #6b7572;
+  --color-bone: #a9b0ad;
+  --color-chalk: #d6d3c8;
+  --color-paper: #f2ebdd;
+  --color-accent: #5bcfa8;
+  --color-accent-deep: #2f9b7c;
+  --color-rust: #e07a64;
+  --color-moss: #7fa680;
+  --color-hairline: rgb(255 255 255 / 0.09);
+  --color-hairline-strong: rgb(255 255 255 / 0.16);
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --color-ink: #f5f0e3;
+  --color-vellum: #fdfaf0;
+  --color-slate: #ebe5d4;
+  --color-stone: #d3ccba;
+  --color-mist: #807a6e;
+  --color-bone: #4a4842;
+  --color-chalk: #2a2722;
+  --color-paper: #14110c;
+  --color-accent: #2f9b7c;
+  --color-accent-deep: #1e6b54;
+  --color-rust: #b9543b;
+  --color-moss: #557856;
+  --color-hairline: rgb(20 17 12 / 0.10);
+  --color-hairline-strong: rgb(20 17 12 / 0.20);
+
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'ss03', 'cv11';
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+
+  /* Scrollbars — themed */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-stone) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-stone);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-mist);
+  }
+
+  /* Cleaner native autofill */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-paper);
+    -webkit-box-shadow: 0 0 0 1000px var(--color-vellum) inset;
+    caret-color: var(--color-paper);
+    transition: background-color 9999s ease-out 0s;
+  }
+}
+
+/* ─── Atmosphere — grain + accent glow ────────────────── */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.92  0 0 0 0 0.86  0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.6;
+  mix-blend-mode: overlay;
+}
+[data-theme='light'] .grain::before {
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+.accent-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 18% 88%,
+    color-mix(in oklab, var(--color-accent) 22%, transparent),
+    transparent 55%
+  );
+}
+
+/* ─── Display utilities ─────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-hairline);
+}
+
+.divider-dotted {
+  background-image: linear-gradient(
+    to right,
+    var(--color-hairline-strong) 50%,
+    transparent 50%
+  );
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+  height: 1px;
+}
+
+/* ─── Form controls ──────────────────────────────────── */
+.parley-input {
+  width: 100%;
+  background: transparent;
+  color: var(--color-paper);
+  border: none;
+  border-bottom: 1px solid var(--color-hairline-strong);
+  padding: 0.55rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  outline: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.parley-input::placeholder {
+  color: var(--color-mist);
+}
+.parley-input:hover {
+  border-bottom-color: var(--color-mist);
+}
+.parley-input:focus {
+  border-bottom-color: var(--color-accent);
+}
+textarea.parley-input {
+  border: 1px solid var(--color-hairline-strong);
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-soft);
+  resize: vertical;
+}
+textarea.parley-input:hover {
+  border-color: var(--color-mist);
+}
+textarea.parley-input:focus {
+  border-color: var(--color-accent);
+}
+
+.parley-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.005em;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-soft);
+  border: 1px solid var(--color-paper);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.parley-button:hover {
+  background: var(--color-accent);
+  color: var(--color-ink);
+  border-color: var(--color-accent);
+}
+.parley-button:disabled {
+  background: var(--color-stone);
+  color: var(--color-mist);
+  border-color: var(--color-stone);
+  cursor: not-allowed;
+}
+
+.parley-button-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 400;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-soft);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.parley-button-ghost:hover {
+  border-color: var(--color-accent);
+  color: var(--color-paper);
+}
+.parley-button-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.parley-button-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: transparent;
+  color: var(--color-rust);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid color-mix(in oklab, var(--color-rust) 32%, transparent);
+  border-radius: var(--radius-soft);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.parley-button-danger:hover {
+  background: color-mix(in oklab, var(--color-rust) 8%, transparent);
+  border-color: var(--color-rust);
+}
+
+.parley-link {
+  color: var(--color-paper);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-hairline-strong);
+  transition: border-color 0.2s, color 0.2s;
+}
+.parley-link:hover {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Theme-toggle icon button */
+.parley-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-soft);
+  border: 1px solid var(--color-hairline-strong);
+  color: var(--color-bone);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.parley-icon-button:hover {
+  color: var(--color-paper);
+  border-color: var(--color-accent);
+}
+
+/* ─── Animations ────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ink-in {
+  from {
+    opacity: 0;
+    letter-spacing: -0.03em;
+  }
+  to {
+    opacity: 1;
+    letter-spacing: -0.005em;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-fade {
+  animation: fade 0.35s ease-out both;
+}
+.animate-drawer {
+  animation: drawer-in 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-modal {
+  animation: modal-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-ink {
+  animation: ink-in 0.9s ease-out both;
+}
+
+.delay-1 {
+  animation-delay: 60ms;
+}
+.delay-2 {
+  animation-delay: 120ms;
+}
+.delay-3 {
+  animation-delay: 180ms;
+}
+.delay-4 {
+  animation-delay: 240ms;
+}
+.delay-5 {
+  animation-delay: 300ms;
+}

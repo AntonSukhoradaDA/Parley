@@ -31,7 +31,11 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthCard title="Create account" subtitle="Join Parley">
+    <AuthCard
+      eyebrow="Begin — 01"
+      title="Open an account"
+      subtitle="Three pieces of paper. Then the room is yours."
+    >
       <form onSubmit={onSubmit} noValidate>
         <FormField label="Email">
           <input
@@ -40,10 +44,11 @@ export function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
+            placeholder="you@somewhere.tld"
             required
           />
         </FormField>
-        <FormField label="Username">
+        <FormField label="Username" hint="3–32 chars · a–z, 0–9, . _ -">
           <input
             type="text"
             className={inputClass}
@@ -53,10 +58,11 @@ export function RegisterPage() {
             minLength={3}
             maxLength={32}
             pattern="[a-zA-Z0-9_.\-]+"
+            placeholder="how others will know you"
             required
           />
         </FormField>
-        <FormField label="Password">
+        <FormField label="Password" hint="8 or more">
           <input
             type="password"
             className={inputClass}
@@ -64,22 +70,26 @@ export function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             minLength={8}
+            placeholder="something you'll remember"
             required
           />
         </FormField>
         {error && (
-          <div className="text-sm text-red-600 mb-3" role="alert">
+          <div
+            className="text-sm text-rust mb-4 font-mono border-l-2 border-rust pl-3 py-1"
+            role="alert"
+          >
             {error}
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Creating account…' : 'Create account'}
+          {submitting ? 'Opening…' : 'Open account →'}
         </button>
       </form>
-      <p className="text-center text-sm text-gray-500 mt-4">
-        Already have an account?{' '}
-        <Link className="text-blue-600 hover:underline" to="/login">
-          Sign in
+      <p className="mt-8 pt-6 border-t border-hairline text-sm text-mist">
+        Already aboard?{' '}
+        <Link className="parley-link" to="/login">
+          Sign in instead
         </Link>
       </p>
     </AuthCard>
