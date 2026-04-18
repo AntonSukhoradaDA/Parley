@@ -1,0 +1,195 @@
+import { useState } from 'react'
+import type { Room } from '@/lib/rooms'
+
+export function RoomSidebar({
+  rooms,
+  selectedId,
+  onSelect,
+  onCreate,
+  onBrowse,
+  loading,
+}: {
+  rooms: Room[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onCreate: () => void
+  onBrowse: () => void
+  loading: boolean
+}) {
+  const [openSection, setOpenSection] = useState<{ public: boolean; private: boolean }>({
+    public: true,
+    private: true,
+  })
+  const publicRooms = rooms.filter((r) => r.visibility === 'public')
+  const privateRooms = rooms.filter((r) => r.visibility === 'private')
+
+  return (
+    <aside className="w-72 shrink-0 bg-vellum border-r border-hairline flex flex-col">
+      <div className="px-5 pt-5 pb-4 border-b border-hairline">
+        <div className="eyebrow mb-2 text-accent/80">Your rooms</div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCreate}
+            className="parley-button flex-1 !py-2 !text-[13px]"
+          >
+            New room
+          </button>
+          <button
+            type="button"
+            onClick={onBrowse}
+            className="parley-button-ghost"
+            title="Browse public rooms"
+          >
+            Browse
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-3">
+        {loading && (
+          <div className="px-5 py-3 text-xs text-mist font-mono">loading…</div>
+        )}
+        {!loading && rooms.length === 0 && (
+          <div className="px-5 py-8 text-center">
+            <div className="text-paper text-lg font-medium tracking-tight leading-tight mb-2">
+              Empty desk.
+            </div>
+            <p className="text-sm text-mist leading-relaxed">
+              Open a new room of your own,
+              <br />
+              or browse the floor.
+            </p>
+          </div>
+        )}
+
+        <Section
+          title="Public"
+          open={openSection.public}
+          onToggle={() => setOpenSection((s) => ({ ...s, public: !s.public }))}
+          count={publicRooms.length}
+        >
+          {publicRooms.map((r) => (
+            <RoomItem
+              key={r.id}
+              room={r}
+              selected={r.id === selectedId}
+              onSelect={onSelect}
+            />
+          ))}
+          {publicRooms.length === 0 && openSection.public && !loading && rooms.length > 0 && (
+            <EmptyHint label="None yet." />
+          )}
+        </Section>
+        <Section
+          title="Private"
+          open={openSection.private}
+          onToggle={() => setOpenSection((s) => ({ ...s, private: !s.private }))}
+          count={privateRooms.length}
+        >
+          {privateRooms.map((r) => (
+            <RoomItem
+              key={r.id}
+              room={r}
+              selected={r.id === selectedId}
+              onSelect={onSelect}
+            />
+          ))}
+          {privateRooms.length === 0 && openSection.private && !loading && rooms.length > 0 && (
+            <EmptyHint label="None yet." />
+          )}
+        </Section>
+      </div>
+    </aside>
+  )
+}
+
+function Section({
+  title,
+  open,
+  onToggle,
+  count,
+  children,
+}: {
+  title: string
+  open: boolean
+  onToggle: () => void
+  count: number
+  children: React.ReactNode
+}) {
+  return (
+    <div className="mb-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-1.5 text-mist hover:text-chalk transition-colors"
+      >
+        <span className="eyebrow flex items-center gap-2">
+          <span className="text-[10px] text-accent/70">{open ? '▾' : '▸'}</span>
+          {title}
+        </span>
+        <span className="text-[10.5px] font-mono text-mist">
+          {String(count).padStart(2, '0')}
+        </span>
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  )
+}
+
+function EmptyHint({ label }: { label: string }) {
+  return (
+    <div className="px-5 py-2 text-xs text-mist/70">{label}</div>
+  )
+}
+
+function RoomItem({
+  room,
+  selected,
+  onSelect,
+}: {
+  room: Room
+  selected: boolean
+  onSelect: (id: string) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(room.id)}
+      className={
+        'group relative w-full text-left pl-5 pr-4 py-1.5 flex items-center gap-3 transition-colors ' +
+        (selected
+          ? 'bg-slate text-paper'
+          : 'text-bone hover:bg-slate/50 hover:text-paper')
+      }
+    >
+      {selected && (
+        <span
+          className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-accent"
+          aria-hidden
+        />
+      )}
+      <span
+        className={
+          'text-xs font-mono w-3 ' +
+          (room.visibility === 'public' ? 'text-mist' : 'text-accent')
+        }
+      >
+        {room.visibility === 'public' ? '#' : '◆'}
+      </span>
+      <span className="truncate flex-1 text-[14px] tracking-tight">
+        {room.name}
+      </span>
+      {room.role !== 'member' && (
+        <span
+          className={
+            'text-[9.5px] font-mono uppercase tracking-wider ' +
+            (room.role === 'owner' ? 'text-accent' : 'text-mist')
+          }
+        >
+          {room.role}
+        </span>
+      )}
+    </button>
+  )
+}
