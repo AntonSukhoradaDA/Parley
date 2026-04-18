@@ -1,100 +1,48 @@
 # Parley
 
-> A classic self-hosted web chat server — rooms, direct messages, file sharing, and optional XMPP federation.
+> A classic self-hosted web chat server -- rooms, direct messages, file sharing, and moderation.
 
-Parley is a classic web-based chat application in the spirit of early online chat rooms and IRC, brought into the modern web. It supports public and private rooms, one-to-one personal messaging, contacts and friend lists, file and image sharing, moderation tools, and persistent message history. It is designed to be **self-hosted** and **easy to deploy** — one `docker compose up` and you have your own chat server running.
+Parley is a web-based chat application supporting public and private rooms, one-to-one direct messaging, contacts and friend lists, file and image sharing, moderation tools, and persistent message history. It is designed to be **self-hosted** and **easy to deploy** -- one `docker compose up` and you have your own chat server running.
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
 - [Quick Start](#quick-start)
-- [Screenshots](#screenshots)
+- [Features](#features)
 - [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
 - [Architecture](#architecture)
 - [Configuration](#configuration)
-- [Usage](#usage)
-- [XMPP Federation (Optional)](#xmpp-federation-optional)
-- [Capacity & Performance](#capacity--performance)
-- [Development](#development)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Features
-
-### Accounts & Sessions
-- Self-registration with email, username, and password
-- Persistent login across browser restarts
-- Multi-session support — view and revoke active sessions individually
-- Secure password hashing, password reset, and password change
-- Self-service account deletion
-
-### Messaging
-- Public and private chat rooms
-- One-to-one personal messaging
-- Message replies with visual quoting
-- Message editing (with "edited" indicator) and deletion
-- Emoji support
-- UTF-8 multiline text, up to 3 KB per message
-- Full message history with **infinite scroll**
-- Messages to offline users are persisted and delivered on reconnect
-
-### Attachments
-- Upload files and images via button or copy-paste
-- Original filename preserved
-- Optional comment on each attachment
-- Files up to **20 MB**, images up to **3 MB**
-- Access scoped to current room members only
-
-### Contacts & Friends
-- Personal friend list
-- Send friend requests by username or from a room's member list
-- Confirm, decline, or remove friends
-- User-to-user ban (blocks new DMs; existing history becomes read-only)
-
-### Moderation
-- Room owner + admins model
-- Admins can delete messages, remove members, ban users, manage the ban list
-- Owner can delete the room and remove admins
-- Removing a user from a room counts as a ban
-
-### Presence
-- **Online / AFK / Offline** statuses
-- Multi-tab aware — AFK only triggers when *all* tabs are idle > 1 minute
-- Low-latency presence updates (< 2 seconds)
-
-### Notifications
-- Unread indicators on rooms and contacts
-- Cleared when the chat is opened
-
-### Optional: XMPP / Jabber Federation
-- Connect with any standard Jabber client
-- Server-to-server federation — Parley instances can talk to each other
-- Admin dashboards for connections and federation traffic
+- [Local Development](#local-development)
+- [API Reference](#api-reference)
+- [Capacity and Performance](#capacity-and-performance)
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
+
 - [Docker](https://docs.docker.com/get-docker/) 20.10+
 - [Docker Compose](https://docs.docker.com/compose/install/) v2+
 
 ### Run
 
 ```bash
-git clone https://github.com/<your-username>/parley.git
+git clone <repo-url>
 cd parley
 docker compose up
 ```
 
-Then open **http://localhost:8080** in your browser.
+That's it. Open **http://localhost:8080** in your browser. No external services, no manual database setup, no configuration needed.
 
-That's it. No external services, no manual DB setup, no extra configuration needed for a local test drive.
+The first `docker compose up` will:
+1. Pull PostgreSQL 16 and Mailpit images
+2. Build the server (NestJS) and client (React + nginx) images
+3. Start all 4 services
+4. Run database migrations automatically
+5. Serve the app on port 8080
 
 ### Stop
 
@@ -108,227 +56,377 @@ To also remove persistent data (database + uploaded files):
 docker compose down -v
 ```
 
+### Available Services
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| App | http://localhost:8080 | Main application |
+| Mail UI | http://localhost:8025 | Mailpit -- catches all outgoing emails (password resets) |
+
 ---
 
-## Screenshots
+## Features
 
-> *Add screenshots here once the UI is implemented.*
+### Accounts and Sessions
+- Self-registration with email, username, and password
+- Persistent login across browser restarts (httpOnly refresh cookie)
+- Multi-session support -- view and revoke active sessions individually
+- Secure password hashing (bcrypt), password reset via email, password change
+- Self-service account deletion (cascades owned rooms and data)
 
-```
-+----------------------------------------------------------------------------------+
-| Parley | Public Rooms | Private Rooms | Contacts | Sessions | Profile ▼ | Out    |
-+----------------------------------------------------------------------------------+
-| # engineering-room                                    | Room info              |
-| [10:21] Bob: Hello team                               | Owner: alice           |
-| [10:22] Alice: Uploading spec                         | Members (38)           |
-| [10:25] Carol replied to Bob:                         | o Alice    (online)    |
-|   > Hello team                                        | o Bob      (online)    |
-|   Can we make this private?                           | - Carol    (AFK)       |
-+-------------------------------------------------------+------------------------+
-| [emoji] [attach] [Replying to: Bob x]  [ Type a message... ]       [ Send ]     |
-+----------------------------------------------------------------------------------+
-```
+### Messaging
+- Public and private chat rooms
+- One-to-one personal / direct messaging
+- Message replies with visual quoting
+- Message editing (with "edited" indicator) and deletion
+- UTF-8 multiline text, up to 3 KB per message
+- Full message history with infinite scroll (cursor-based pagination)
+- Messages to offline users are persisted and delivered on reconnect
 
-See [`docs/wireframes.md`](./docs/wireframes.md) for full UI wireframes.
+### Attachments
+- Upload files (up to 20 MB) and images (up to 3 MB) via button or copy-paste
+- Original filename preserved, optional comment per attachment
+- Access scoped to current room members only
+- Inline image preview in messages, file download links
+
+### Contacts and Friends
+- Personal friend list with presence indicators
+- Send friend requests by username (with optional message)
+- Accept, decline, or cancel requests
+- Remove friends
+- User-to-user ban (blocks DMs; existing history becomes read-only; auto-removes friendship)
+
+### Moderation
+- Room owner + admins model
+- Admins can delete messages, remove/ban members, manage the ban list
+- Owner can promote/demote admins, delete the room
+- Removing a user from a room counts as a ban (cannot rejoin until unbanned)
+- Room capacity enforced at 1000 members
+
+### Presence
+- Online / AFK / Offline statuses
+- Multi-tab aware -- AFK only triggers when all tabs are idle for >1 minute
+- Low-latency presence updates via WebSocket
+
+### Notifications
+- Unread message badges on rooms and DMs in the sidebar
+- Cleared when the chat is opened
 
 ---
 
 ## Tech Stack
 
-- **Backend:** Node.js
-- **Frontend:** React
-- **Realtime:** WebSockets
-- **Database:** PostgreSQL
-- **File storage:** Local filesystem (Docker volume)
-- **XMPP (optional):** [library — e.g. ejabberd, Prosody, Slixmpp, xmpp.js]
-- **Deployment:** Docker + Docker Compose
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Backend** | Node.js + NestJS (TypeScript) | Node 20, NestJS 11 |
+| **Database** | PostgreSQL | 16 |
+| **ORM** | Prisma | 6 |
+| **Auth** | JWT (access + refresh tokens) + bcrypt | |
+| **Real-time** | Socket.IO (via NestJS WebSocket Gateway) | |
+| **Email** | Nodemailer (Mailpit in dev) | |
+| **Frontend** | React + Vite (TypeScript) | React 19, Vite 8 |
+| **State** | Zustand | 5 |
+| **Styling** | Tailwind CSS | 4 |
+| **Routing** | React Router | 7 |
+| **Containerization** | Docker + Docker Compose | |
+| **Web Server** | nginx (SPA + reverse proxy) | alpine |
+
+---
+
+## Project Structure
+
+```
+parley/
+  client/                          # Frontend (React SPA)
+    src/
+      components/                  # UI components
+        AttachmentView.tsx         #   File/image attachment display
+        AuthCard.tsx               #   Auth page layout wrapper
+        ContactsPanel.tsx          #   Friends list, requests, add friend
+        CreateRoomModal.tsx        #   Create room form
+        Logo.tsx                   #   Logo mark + wordmark
+        ManageRoomModal.tsx        #   Room management (members, admins, bans, settings)
+        MemberPanel.tsx            #   Right-side member list with presence
+        MessageInput.tsx           #   Message composer (text, reply, edit, attach)
+        MessageList.tsx            #   Scrollable message feed with infinite scroll
+        Modal.tsx                  #   Reusable modal / drawer
+        ProfileModal.tsx           #   Password change, sessions, blocked users, delete account
+        ProtectedRoute.tsx         #   Auth route guards
+        PublicRoomsModal.tsx       #   Browse + join public rooms
+        RoomSidebar.tsx            #   Left sidebar (rooms, DMs, unread badges)
+        ThemeToggle.tsx            #   Dark/light mode switch
+      lib/                         # API client functions
+        api.ts                     #   Fetch wrapper with auto token refresh
+        attachments.ts             #   Upload/download API
+        auth.ts                    #   Login, register, logout, bootstrap
+        friends.ts                 #   Friend requests, bans
+        personal-chats.ts          #   DM conversation API
+        profile.ts                 #   Password, sessions management
+        rooms.ts                   #   Room CRUD, membership, moderation
+        send-message.ts            #   Message sending helper
+        socket.ts                  #   Socket.IO client + activity tracking
+      pages/                       # Route-level components
+        ChatPage.tsx               #   Main chat interface
+        ForgotPasswordPage.tsx     #   Password reset request
+        LoginPage.tsx              #   Sign in
+        RegisterPage.tsx           #   Create account
+        ResetPasswordPage.tsx      #   Set new password (from email link)
+      store/                       # Zustand state stores
+        auth.ts                    #   User session + token
+        pending.ts                 #   Pending attachment uploads
+        presence.ts                #   Online/AFK/offline statuses, unread counts
+        rooms.ts                   #   Room list + selected room
+        theme.ts                   #   Dark/light theme preference
+      App.tsx                      # Router configuration
+      main.tsx                     # React entry point
+      index.css                    # Tailwind + design system tokens
+    nginx.conf                     # SPA routing + API/WS proxy config
+    Dockerfile                     # Multi-stage: build -> nginx
+
+  server/                          # Backend (NestJS)
+    src/
+      attachments/                 # File upload/download module
+        attachments.controller.ts  #   POST /upload, GET /:id/download
+        attachments.module.ts
+        attachments.service.ts     #   Disk storage, access control
+      auth/                        # Authentication module
+        auth.controller.ts         #   Register, login, refresh, password reset
+        auth.module.ts
+        auth.service.ts            #   JWT issuance, token rotation, bcrypt
+        decorators/
+          current-user.decorator.ts #  @CurrentUser() parameter decorator
+        dto/
+          forgot-password.dto.ts
+          login.dto.ts
+          register.dto.ts
+        guards/
+          jwt-auth.guard.ts        #   @UseGuards(JwtAuthGuard)
+        strategies/
+          jwt.strategy.ts          #   Passport JWT extraction + validation
+      chat/                        # WebSocket gateway module
+        chat.gateway.ts            #   Socket.IO gateway (messaging + presence events)
+        chat.module.ts
+        presence.service.ts        #   In-memory presence tracking per socket
+      friends/                     # Friend system module
+        friends.controller.ts      #   Request, accept, reject, list, remove
+        friends.module.ts
+        friends.service.ts         #   Friendship logic, ban checks
+      health/                      # Health check module
+        health.controller.ts       #   GET /api/health
+        health.module.ts
+      mail/                        # Email module (global)
+        mail.module.ts
+        mail.service.ts            #   Nodemailer transporter
+      messages/                    # Message module
+        messages.controller.ts     #   GET history (cursor-based)
+        messages.module.ts
+        messages.service.ts        #   Send, edit, delete, paginate
+      personal-chats/              # Direct message module
+        personal-chats.controller.ts  # List DMs, open DM
+        personal-chats.module.ts
+        personal-chats.service.ts  #   Create personal room, freeze on ban
+      prisma/                      # Database module (global)
+        prisma.module.ts
+        prisma.service.ts          #   PrismaClient lifecycle
+      rooms/                       # Room module
+        rooms.controller.ts        #   Full room CRUD + moderation endpoints
+        rooms.module.ts
+        rooms.service.ts           #   Membership, bans, capacity, admin logic
+        dto/
+          create-room.dto.ts       #   CreateRoomDto, UpdateRoomDto, InviteUserDto
+      users/                       # User module
+        users.controller.ts        #   Delete account, user-to-user bans
+        users.module.ts
+        users.service.ts           #   Profile, ban/unban logic
+      app.module.ts                # Root module (imports all feature modules)
+      main.ts                      # Bootstrap (port, prefix, validation pipe)
+    prisma/
+      schema.prisma                # Database schema (10 models)
+      migrations/                  # Auto-generated SQL migrations
+    Dockerfile                     # Multi-stage: build -> production node
+
+  docs/
+    architecture.md                # Detailed architecture diagrams and decisions
+
+  docker-compose.yml               # 4-service orchestration
+  .env.example                     # Environment variable template
+  INSTRUCTIONS.md                  # Original product requirements
+  PLAN.MD                          # Implementation plan (9 phases)
+```
 
 ---
 
 ## Architecture
 
-```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│   Web Client    │  ◄──► │  Parley Server  │  ◄──► │   PostgreSQL    │
-│  (React SPA)    │  WS   │   (HTTP + WS)   │       │                 │
-└─────────────────┘       └────────┬────────┘       └─────────────────┘
-                                   │
-                                   ▼
-                          ┌─────────────────┐
-                          │  File Storage   │
-                          │  (volume mount) │
-                          └─────────────────┘
+See [`docs/architecture.md`](./docs/architecture.md) for full diagrams covering:
+- System overview and Docker service topology
+- Backend module dependency graph
+- Authentication and JWT refresh flow
+- WebSocket event protocol
+- Presence state machine
+- Frontend component tree and state management
+- Database entity relationships
+- Complete API endpoint reference
+- WebSocket event catalog
 
-                    Optional:
-                          ┌─────────────────┐       ┌─────────────────┐
-                          │  XMPP Module    │  ◄──► │  Other Parley   │
-                          │  (federation)   │  S2S  │  / XMPP Server  │
-                          └─────────────────┘       └─────────────────┘
+### High-Level Overview
+
+```
+Browser (React SPA)
+    |
+    | :8080
+    v
+nginx (static files + reverse proxy)
+    |
+    | /api/* and /socket.io/*
+    v
+NestJS Server (REST API + Socket.IO Gateway)
+    |
+    +---> PostgreSQL 16 (data)
+    +---> Local filesystem (uploaded files)
+    +---> Mailpit (dev email)
 ```
 
-- **HTTP API** — REST endpoints for auth, rooms, contacts, history, uploads
-- **WebSocket** — realtime messaging, presence, notifications
-- **Persistence** — all messages, rooms, users, and metadata stored in PostgreSQL
-- **Files** — stored on the local filesystem, served via authenticated endpoints
+### Key Design Decisions
+
+1. **Personal chats as rooms** -- DMs are modeled as rooms with `isPersonal=true` and exactly 2 members. This unifies the messaging code path.
+
+2. **Cursor-based pagination** -- Message history uses cursor-based pagination (`id` as cursor) for efficient infinite scroll over large histories.
+
+3. **In-memory presence** -- At 300 users, presence tracking lives in-memory on the server process via a simple `Map<userId, SocketEntry[]>`. No Redis needed.
+
+4. **JWT with DB-stored refresh tokens** -- Access tokens are stateless (15min TTL). Refresh tokens are stored in the `sessions` table, enabling session listing and per-device revocation with token rotation.
+
+5. **File access control at API level** -- Files stored with UUID names. Downloads go through an authenticated endpoint that verifies room membership.
+
+6. **Socket.IO rooms for broadcasting** -- Each chat room maps to a Socket.IO room. Efficient broadcasting without iterating connected clients.
 
 ---
 
 ## Configuration
 
-Configuration is provided via environment variables. A `.env.example` file is included in the repo — copy it to `.env` and adjust as needed.
+Copy `.env.example` to `.env` and adjust as needed. For local development, the defaults work out of the box.
 
 | Variable | Default | Description |
-|---|---|---|
-| `PARLEY_PORT` | `8080` | Port the web server listens on |
-| `PARLEY_DB_URL` | `postgres://parley:parley@db:5432/parley` | PostgreSQL connection string |
-| `PARLEY_FILES_DIR` | `/var/parley/files` | Directory for uploaded files |
-| `PARLEY_MAX_FILE_MB` | `20` | Max file upload size (MB) |
-| `PARLEY_MAX_IMAGE_MB` | `3` | Max image upload size (MB) |
-| `PARLEY_SESSION_SECRET` | *(required)* | Secret for signing session tokens |
-| `PARLEY_XMPP_ENABLED` | `false` | Enable XMPP / Jabber federation |
-| `PARLEY_XMPP_DOMAIN` | `parley.local` | XMPP domain for this server |
+|----------|---------|-------------|
+| `PARLEY_PORT` | `8080` | Host port for the web UI |
+| `APP_URL` | `http://localhost:8080` | Public URL (used in email links) |
+| `JWT_SECRET` | `parley-dev-secret...` | JWT signing secret. **Override in production** |
+| `MAILHOG_UI_PORT` | `8025` | Mailpit web UI port |
+| `SMTP_HOST` | `mailhog` | SMTP server host |
+| `SMTP_PORT` | `1025` | SMTP server port |
+| `SMTP_USER` | (empty) | SMTP auth username |
+| `SMTP_PASS` | (empty) | SMTP auth password |
+| `SMTP_SECURE` | `false` | Use TLS for SMTP |
+| `MAIL_FROM` | `Parley <noreply@parley.local>` | Sender address |
 
-> *Add or edit variables to match your actual implementation.*
+### Production Checklist
 
----
-
-## Usage
-
-### Create an Account
-1. Open the app and click **Register**.
-2. Enter your email, a unique username, and a password.
-3. You're in — no email verification required.
-
-### Create a Room
-1. Click **Create room** in the sidebar.
-2. Pick a unique name, description, and visibility (public / private).
-3. Invite friends or share the room name.
-
-### Add a Friend
-- By username from **Contacts → Add friend**
-- Or click a user in a room member list → **Send friend request**
-
-### Manage a Room (owner/admin only)
-From the room, click **Manage room** to open the admin modal with tabs for Members, Admins, Banned users, Invitations, and Settings.
+1. Set a strong `JWT_SECRET` (`openssl rand -hex 48`)
+2. Point `SMTP_*` at your real SMTP relay
+3. Set `APP_URL` to your public domain
+4. Consider removing the `mailhog` service
+5. Remove the `db` port mapping (no need to expose PostgreSQL)
 
 ---
 
-## XMPP Federation (Optional)
+## Local Development
 
-Parley can optionally expose an XMPP interface, allowing:
+### Without Docker (for active development)
 
-- **Client connections** — use any Jabber client (Gajim, Dino, Conversations, Pidgin, etc.) to log in with your Parley credentials
-- **Server federation** — Parley instances can exchange messages with each other (and with any other XMPP server) using standard S2S
-
-Enable it by setting `PARLEY_XMPP_ENABLED=true` in `.env` and restarting with `docker compose up`.
-
-### Admin Dashboards
-- **Connections** — view active XMPP client sessions
-- **Federation** — view federation peers and traffic statistics
-
-### Load Testing
-
-A load-test harness is provided in [`tests/load/`](./tests/load/) that:
-
-- Connects 50+ simulated clients to server A and 50+ to server B
-- Exchanges messages between the two servers
-- Reports throughput and latency
+**Prerequisites:** Node.js 20+, PostgreSQL 16 running locally
 
 ```bash
-docker compose -f docker-compose.federation.yml up
-./tests/load/run.sh
-```
+# 1. Start PostgreSQL (via Docker or local install)
+docker compose up -d db mailhog
 
----
-
-## Capacity & Performance
-
-Parley is designed for moderate scale:
-
-| Metric | Target |
-|---|---|
-| Concurrent users | **300** |
-| Max room size | **1,000 participants** |
-| Message delivery latency | **< 3 seconds** |
-| Presence update latency | **< 2 seconds** |
-| Room history | Usable with **10,000+ messages** per room |
-| Max file size | **20 MB** |
-| Max image size | **3 MB** |
-| Message text limit | **3 KB** (UTF-8) |
-
----
-
-## Development
-
-### Local dev (without Docker)
-
-> *Update these commands once the stack is chosen.*
-
-```bash
-# Backend
+# 2. Backend
 cd server
+cp .env.example .env        # or use existing .env
 npm install
-npm run dev
+npx prisma generate
+npx prisma migrate dev
+npm run start:dev            # http://localhost:3000
 
-# Frontend
+# 3. Frontend (separate terminal)
 cd client
 npm install
-npm run dev
+npm run dev                  # http://localhost:5173 (proxies API to :3000)
 ```
 
-### Running tests
+The Vite dev server proxies `/api/*` and `/socket.io/*` to `localhost:3000`.
+
+### With Docker (production-like)
 
 ```bash
-npm test
+docker compose up --build
 ```
 
-### Project structure
+### Running Tests
 
+```bash
+cd server
+npm test                     # Unit tests
+npm run test:e2e             # End-to-end tests
 ```
-parley/
-├── server/            # Backend (API, WebSocket, XMPP module)
-├── client/            # Frontend web app
-├── docs/              # Wireframes, architecture notes
-├── tests/             # Unit, integration, and load tests
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-└── README.md
+
+### Database Migrations
+
+```bash
+cd server
+
+# Create a new migration after schema changes
+npx prisma migrate dev --name <migration-name>
+
+# Apply migrations (production)
+npx prisma migrate deploy
+
+# Reset database (dev only)
+npx prisma migrate reset
 ```
 
 ---
 
-## Roadmap
+## API Reference
 
-- [x] Core chat (rooms, DMs, presence)
-- [x] Friends & contacts
-- [x] File & image attachments
-- [x] Moderation (bans, admins, room deletion)
-- [ ] XMPP client support
-- [ ] Server-to-server federation
-- [ ] Admin dashboards for connections & federation
-- [ ] Load test harness (50 + 50 federated clients)
+All endpoints are prefixed with `/api`. Protected endpoints require `Authorization: Bearer <token>`.
+
+Full endpoint documentation with payloads and WebSocket events is in [`docs/architecture.md`](./docs/architecture.md#api-endpoints).
+
+### Summary
+
+| Module | Base Path | Endpoints |
+|--------|-----------|-----------|
+| Auth | `/api/auth` | register, login, refresh, logout, forgot-password, reset-password, me, change-password, sessions |
+| Rooms | `/api/rooms` | CRUD, join, leave, invite, members, bans, admins |
+| Messages | `/api/rooms/:roomId/messages` | Paginated history |
+| Friends | `/api/friends` | list, requests, send, accept, reject, remove |
+| Users | `/api/users` | delete account, ban/unban users |
+| Personal Chats | `/api/personal-chats` | list DMs, open DM |
+| Attachments | `/api/attachments` | upload, download |
+| Health | `/api/health` | service health check |
+
+### WebSocket
+
+Connect to `/socket.io` with `{ auth: { token } }`. Events documented in [`docs/architecture.md`](./docs/architecture.md#websocket-events).
 
 ---
 
-## Contributing
+## Capacity and Performance
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+| Metric | Target |
+|--------|--------|
+| Concurrent users | 300 |
+| Max room size | 1,000 members |
+| Message delivery latency | < 3 seconds |
+| Presence update latency | < 2 seconds |
+| Room history | 10,000+ messages (infinite scroll) |
+| Max file size | 20 MB |
+| Max image size | 3 MB |
+| Message text limit | 3 KB (UTF-8) |
 
 ---
 
 ## License
 
-[MIT](./LICENSE) © 2026 — *your name here*
-
----
-
-<p align="center">
-  <sub>Built with care. Self-hosted by design. Conversations, rooms, and everything in between.</sub>
-</p>
+MIT
