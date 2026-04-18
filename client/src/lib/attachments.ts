@@ -35,7 +35,9 @@ export async function uploadAttachment(
     try {
       const data = JSON.parse(text)
       message = Array.isArray(data.message) ? data.message.join(', ') : data.message || message
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     throw new Error(message)
   }
 

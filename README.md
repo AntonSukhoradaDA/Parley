@@ -112,6 +112,12 @@ docker compose down -v
 - Unread message badges on rooms and DMs in the sidebar
 - Cleared when the chat is opened
 
+### Theming and i18n
+- Three-way theme switcher: Light / System / Dark (system follows `prefers-color-scheme`)
+- Internationalization via `i18next` with three languages: English, French, Spanish
+- Language auto-detects from browser on first visit, persists in `localStorage`, exposed via a switcher in every page header
+- `<html lang>` syncs to the active language automatically
+
 ---
 
 ## Tech Stack
@@ -128,6 +134,8 @@ docker compose down -v
 | **State** | Zustand | 5 |
 | **Styling** | Tailwind CSS | 4 |
 | **Routing** | React Router | 7 |
+| **i18n** | i18next + react-i18next | 26 / 17 |
+| **Lint / Format** | ESLint 9 (flat config) + Prettier 3 | |
 | **Containerization** | Docker + Docker Compose | |
 | **Web Server** | nginx (SPA + reverse proxy) | alpine |
 
@@ -140,21 +148,30 @@ parley/
   client/                          # Frontend (React SPA)
     src/
       components/                  # UI components
+        ui/                        #   Shared design-system primitives
+          Avatar.tsx               #     Initial-letter avatar (xs/sm/md/lg)
+          Badge.tsx                #     Accent count pill for unread indicators
+          PresenceDot.tsx          #     Online/AFK/offline status dot
+          SearchInput.tsx          #     Bordered search field with leading icon
+          index.ts                 #     Barrel export
+        icons.tsx                  #   All shared SVG icons
         AttachmentView.tsx         #   File/image attachment display
-        AuthCard.tsx               #   Auth page layout wrapper
-        ContactsPanel.tsx          #   Friends list, requests, add friend
+        AuthCard.tsx               #   Auth page atmospheric split-panel
+        ContactsPanel.tsx          #   Friends list, requests, add friend (drawer)
         CreateRoomModal.tsx        #   Create room form
-        Logo.tsx                   #   Logo mark + wordmark
-        ManageRoomModal.tsx        #   Room management (members, admins, bans, settings)
-        MemberPanel.tsx            #   Right-side member list with presence
+        LanguageSwitcher.tsx       #   EN / FR / ES dropdown
+        Logo.tsx                   #   Logo mark + serif wordmark
+        ManageRoomModal.tsx        #   Room management (members, admins, bans, invites, settings)
+        MemberPanel.tsx            #   Right-side context panel (collapsible)
         MessageInput.tsx           #   Message composer (text, reply, edit, attach)
         MessageList.tsx            #   Scrollable message feed with infinite scroll
-        Modal.tsx                  #   Reusable modal / drawer
-        ProfileModal.tsx           #   Password change, sessions, blocked users, delete account
+        Modal.tsx                  #   Reusable modal / drawer shell
+        PrivateRoomsModal.tsx      #   Browse your joined private rooms
+        ProfileModal.tsx           #   Password, sessions, blocked users, delete account
         ProtectedRoute.tsx         #   Auth route guards
         PublicRoomsModal.tsx       #   Browse + join public rooms
-        RoomSidebar.tsx            #   Left sidebar (rooms, DMs, unread badges)
-        ThemeToggle.tsx            #   Dark/light mode switch
+        RoomSidebar.tsx            #   Left sidebar (rooms, contacts, unread badges, collapsible)
+        ThemeToggle.tsx            #   Light / system / dark segmented control
       lib/                         # API client functions
         api.ts                     #   Fetch wrapper with auto token refresh
         attachments.ts             #   Upload/download API
@@ -166,11 +183,18 @@ parley/
         send-message.ts            #   Message sending helper
         socket.ts                  #   Socket.IO client + activity tracking
       pages/                       # Route-level components
-        ChatPage.tsx               #   Main chat interface
+        ChatPage.tsx               #   Main chat interface (/chats)
         ForgotPasswordPage.tsx     #   Password reset request
+        LandingPage.tsx            #   Public marketing page (/)
+        LegalPage.tsx              #   Shared legal page shell
         LoginPage.tsx              #   Sign in
+        PrivacyPage.tsx            #   /privacy
         RegisterPage.tsx           #   Create account
         ResetPasswordPage.tsx      #   Set new password (from email link)
+        TermsPage.tsx              #   /terms
+      i18n/                        # Internationalization
+        index.ts                   #   i18next config, language list
+        locales/                   #   en.json, fr.json, es.json
       store/                       # Zustand state stores
         auth.ts                    #   User session + token
         pending.ts                 #   Pending attachment uploads
@@ -366,9 +390,28 @@ docker compose up --build
 
 ```bash
 cd server
-npm test                     # Unit tests
+npm test                     # Unit tests (includes 100k-message pagination test)
 npm run test:e2e             # End-to-end tests
 ```
+
+### Lint and Format
+
+The client uses ESLint 9 (flat config) and Prettier 3. Prettier settings live in
+`client/.prettierrc.json`; ESLint extends `prettier` to avoid conflicts.
+
+```bash
+cd client
+npm run lint                 # eslint .
+npm run format               # prettier --write .
+npm run format:check         # prettier --check . (for CI)
+```
+
+### Working on Translations
+
+Translation resources live in `client/src/i18n/locales/{en,fr,es}.json`. Keys
+are namespaced (`landing.*`, `auth.*`, `chat.*`, `sidebar.*`, `nav.*`,
+`common.*`). Add a key to **all three** files; fall back to English is
+automatic but untranslated strings will render in English.
 
 ### Database Migrations
 

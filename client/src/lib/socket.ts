@@ -18,9 +18,7 @@ export function getSocket(): Socket {
 
   // Presence listeners
   socket.on('presence:update', (data: { userId: string; status: string }) => {
-    usePresenceStore
-      .getState()
-      .setStatus(data.userId, data.status as 'online' | 'afk' | 'offline')
+    usePresenceStore.getState().setStatus(data.userId, data.status as 'online' | 'afk' | 'offline')
   })
 
   // Unread listeners

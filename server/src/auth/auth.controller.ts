@@ -16,7 +16,10 @@ import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { IsString, MaxLength, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
-import { CurrentUser, type AuthUser } from './decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthUser,
+} from './decorators/current-user.decorator';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -52,7 +55,10 @@ export class AuthController {
   ) {
     const tokens = await this.auth.register(dto, this.ctx(req));
     this.setRefreshCookie(res, tokens.refreshToken);
-    return { accessToken: tokens.accessToken, user: await this.users.getProfile(tokens.userId) };
+    return {
+      accessToken: tokens.accessToken,
+      user: await this.users.getProfile(tokens.userId),
+    };
   }
 
   @Post('login')
@@ -62,14 +68,24 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.auth.login(dto.email, dto.password, this.ctx(req));
+    const tokens = await this.auth.login(
+      dto.email,
+      dto.password,
+      this.ctx(req),
+    );
     this.setRefreshCookie(res, tokens.refreshToken);
-    return { accessToken: tokens.accessToken, user: await this.users.getProfile(tokens.userId) };
+    return {
+      accessToken: tokens.accessToken,
+      user: await this.users.getProfile(tokens.userId),
+    };
   }
 
   @Post('refresh')
   @HttpCode(200)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const token = req.cookies?.[REFRESH_COOKIE];
     const tokens = await this.auth.refresh(token, this.ctx(req));
     this.setRefreshCookie(res, tokens.refreshToken);
@@ -110,7 +126,11 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
+    await this.auth.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
   }
 

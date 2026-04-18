@@ -1,0 +1,168 @@
+{
+  "common": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "register": "Register",
+    "cancel": "Cancel",
+    "save": "Save",
+    "open": "Open",
+    "close": "Close",
+    "loading": "loading…",
+    "back": "Back"
+  },
+  "lang": {
+    "label": "Language"
+  },
+  "nav": {
+    "publicRooms": "Public rooms",
+    "privateRooms": "Private rooms",
+    "contacts": "Contacts",
+    "sessions": "Sessions",
+    "profile": "Profile",
+    "openChats": "Open chats",
+    "home": "Home"
+  },
+  "landing": {
+    "header": {
+      "signIn": "Sign in",
+      "register": "Register"
+    },
+    "hero": {
+      "eyebrow": "A classic web chat",
+      "tagline": "A quiet room. A long table. A correspondence kept honest by the company you choose to keep.",
+      "createAccount": "Create account",
+      "signIn": "Sign in"
+    },
+    "features": {
+      "eyebrow": "What's inside",
+      "heading_line1": "Everything a classic chat needs.",
+      "heading_line2": "Nothing it doesn't.",
+      "rooms": {
+        "eyebrow": "Rooms",
+        "title": "Public & private",
+        "body": "Open a room to the floor or keep it invitation-only. Owners set visibility; admins moderate."
+      },
+      "direct": {
+        "eyebrow": "Direct",
+        "title": "One-on-one messages",
+        "body": "Friend-gated personal dialogs with the same reply, edit, and attachment affordances as rooms."
+      },
+      "presence": {
+        "eyebrow": "Presence",
+        "title": "Online, AFK, offline",
+        "body": "Low-latency presence across tabs. Idle more than a minute in all tabs and you go AFK automatically."
+      },
+      "attachments": {
+        "eyebrow": "Attachments",
+        "title": "Files, images, pastes",
+        "body": "Upload up to 20 MB per file. Paste images straight from your clipboard. Comments per attachment."
+      },
+      "history": {
+        "eyebrow": "History",
+        "title": "Years of it, scrollable",
+        "body": "Persistent message history with infinite scroll - walk back through 100,000 messages without the client stuttering."
+      },
+      "moderation": {
+        "eyebrow": "Moderation",
+        "title": "Owner, admins, bans",
+        "body": "Per-room admins can remove or ban; owners can delete the room. Personal bans freeze DM history, read-only."
+      }
+    },
+    "cta": {
+      "title": "Pull up a chair.",
+      "body": "A group chat built for long conversations - persistent history, low-latency presence, and the quiet of a room you control.",
+      "start": "Start a session →"
+    },
+    "footer": {
+      "copyright": "© 2026 Parley. All rights reserved.",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Resume",
+      "title": "Welcome back",
+      "subtitle": "Pick up where the conversation last paused.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in →",
+      "submitting": "Signing in…",
+      "forgot": "Forgot your password?",
+      "noAccount": "No account yet?",
+      "register": "Register"
+    },
+    "register": {
+      "eyebrow": "Begin",
+      "title": "Create an account",
+      "subtitle": "Claim a name; enter the room.",
+      "email": "Email",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Create account →",
+      "submitting": "Creating…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "passwordsDontMatch": "Passwords do not match"
+    },
+    "forgot": {
+      "eyebrow": "Recover",
+      "title": "Forgot password",
+      "subtitle": "Enter your email and we'll send a link to set a new one.",
+      "email": "Email",
+      "submit": "Send reset link →",
+      "submitting": "Sending…",
+      "backToLogin": "Back to sign in",
+      "success": "If an account exists for that email, a reset link is on its way."
+    },
+    "reset": {
+      "eyebrow": "Recover",
+      "title": "Reset password",
+      "subtitle": "Pick a new password for your account.",
+      "password": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Set password →",
+      "submitting": "Saving…",
+      "success": "Password updated. Redirecting to sign in…"
+    }
+  },
+  "chat": {
+    "breadcrumbSeparator": "/",
+    "empty": {
+      "eyebrow": "No room selected",
+      "title_line1": "Pick a thread,",
+      "title_line2": "or start one.",
+      "body": "A parley begins with someone choosing the table. Open a room of your own, or join the floor in progress.",
+      "newRoom": "New room",
+      "browse": "Browse public rooms"
+    }
+  },
+  "sidebar": {
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "navigator": "Navigator",
+    "roomsContacts": "Rooms · Contacts",
+    "searchPlaceholder": "Search rooms & contacts",
+    "sections": {
+      "rooms": "Rooms",
+      "public": "Public",
+      "private": "Private",
+      "contacts": "Contacts",
+      "friends": "Friends"
+    },
+    "createRoom": "Create room",
+    "empty": {
+      "title": "Empty desk.",
+      "body_line1": "Open a new room of your own,",
+      "body_line2": "or add a contact to talk to."
+    },
+    "hints": {
+      "noMatches": "No matches.",
+      "noneYet": "None yet.",
+      "noConversations": "No conversations.",
+      "noContacts": "No contacts yet."
+    },
+    "frozen": "frozen"
+  }
+}

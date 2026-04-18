@@ -12,7 +12,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthUser,
+} from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AttachmentsService } from './attachments.service';
 

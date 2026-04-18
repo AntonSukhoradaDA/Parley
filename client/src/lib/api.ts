@@ -19,7 +19,8 @@ interface ApiOptions extends Omit<RequestInit, 'body'> {
 let refreshPromise: Promise<string | null> | null = null
 
 async function rawRequest<T>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const { body, auth = true, skipRefresh, headers, ...rest } = opts
+  // skipRefresh is destructured to prevent it leaking into `rest` / fetch options.
+  const { body, auth = true, skipRefresh: _skipRefresh, headers, ...rest } = opts
   const finalHeaders: Record<string, string> = {
     Accept: 'application/json',
     ...(headers as Record<string, string> | undefined),
@@ -46,7 +47,7 @@ async function rawRequest<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     const message =
       (data && typeof data === 'object' && 'message' in data
         ? Array.isArray((data as { message: unknown }).message)
-          ? ((data as { message: string[] }).message).join(', ')
+          ? (data as { message: string[] }).message.join(', ')
           : String((data as { message: unknown }).message)
         : res.statusText) || 'Request failed'
     throw new ApiError(res.status, message, data)
@@ -67,12 +68,7 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   try {
     return await rawRequest<T>(path, opts)
   } catch (err) {
-    if (
-      err instanceof ApiError &&
-      err.status === 401 &&
-      !opts.skipRefresh &&
-      opts.auth !== false
-    ) {
+    if (err instanceof ApiError && err.status === 401 && !opts.skipRefresh && opts.auth !== false) {
       const newToken = await tryRefresh()
       if (newToken) {
         return await rawRequest<T>(path, { ...opts, skipRefresh: true })

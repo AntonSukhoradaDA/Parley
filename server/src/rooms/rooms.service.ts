@@ -151,7 +151,11 @@ export class RoomsService {
     });
     await this.prisma.room.delete({ where: { id: roomId } });
     for (const a of attachments) {
-      try { unlinkSync(a.storagePath); } catch { /* ignore */ }
+      try {
+        unlinkSync(a.storagePath);
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -241,7 +245,12 @@ export class RoomsService {
 
   // ─── Moderation ──────────────────────────────────────────
 
-  async setAdmin(actorId: string, roomId: string, targetUserId: string, makeAdmin: boolean) {
+  async setAdmin(
+    actorId: string,
+    roomId: string,
+    targetUserId: string,
+    makeAdmin: boolean,
+  ) {
     const room = await this.requireRoom(roomId);
     if (room.ownerId !== actorId) {
       throw new ForbiddenException('Only the owner can manage admins');
@@ -326,8 +335,35 @@ export class RoomsService {
   }
 
   async kick(actorId: string, roomId: string, targetUserId: string) {
-    // Kick = ban semantics per plan ("DELETE /api/rooms/:id/members/:userId — remove member (= ban)")
-    return this.ban(actorId, roomId, targetUserId);
+    // Remove without ban — the removed user can rejoin public rooms freely or
+    // accept a fresh invitation to a private one. Use ban() for permanent lockout.
+    const room = await this.requireRoom(roomId);
+    const actor = await this.requireMember(roomId, actorId);
+    if (actor.role === RoomMemberRole.member) {
+      throw new ForbiddenException('Only owner or admins can remove members');
+    }
+    if (targetUserId === room.ownerId) {
+      throw new BadRequestException('Owner cannot be removed');
+    }
+    if (targetUserId === actorId) {
+      throw new BadRequestException('Cannot remove yourself');
+    }
+    const target = await this.prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId: targetUserId } },
+    });
+    if (!target) {
+      throw new NotFoundException('User is not a member of this room');
+    }
+    if (
+      target.role === RoomMemberRole.admin &&
+      actor.role !== RoomMemberRole.owner
+    ) {
+      throw new ForbiddenException('Only the owner can remove another admin');
+    }
+
+    await this.prisma.roomMember.deleteMany({
+      where: { roomId, userId: targetUserId },
+    });
   }
 
   // ─── Public helpers (used by chat gateway) ───────────────

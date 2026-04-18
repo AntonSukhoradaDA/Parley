@@ -46,19 +46,33 @@ export function ContactsPanel({ open, onClose }: { open: boolean; onClose: () =>
   const pendingCount = requests.incoming.length
 
   return (
-    <Modal open={open} onClose={onClose} eyebrow="Contacts" title="Your circle" variant="drawer" width="max-w-sm">
+    <Modal
+      open={open}
+      onClose={onClose}
+      eyebrow="Contacts"
+      title="Your circle"
+      variant="drawer"
+      width="max-w-sm"
+    >
       <div className="flex gap-1 -mt-1 mb-5 border-b border-hairline">
         {(['friends', 'requests', 'add'] as const).map((t, i) => (
           <button
             key={t}
             type="button"
-            onClick={() => { setTab(t); setError(null) }}
+            onClick={() => {
+              setTab(t)
+              setError(null)
+            }}
             className={
               'group px-3 py-2.5 -mb-px border-b transition-colors flex items-baseline gap-1.5 ' +
-              (tab === t ? 'border-accent text-paper' : 'border-transparent text-mist hover:text-chalk')
+              (tab === t
+                ? 'border-accent text-paper'
+                : 'border-transparent text-mist hover:text-chalk')
             }
           >
-            <span className="font-mono text-[10px] text-accent/60">{String(i + 1).padStart(2, '0')}</span>
+            <span className="font-mono text-[10px] text-accent/60">
+              {String(i + 1).padStart(2, '0')}
+            </span>
             <span className="text-sm">
               {t === 'friends' ? 'Friends' : t === 'requests' ? 'Requests' : 'Add'}
             </span>
@@ -72,20 +86,26 @@ export function ContactsPanel({ open, onClose }: { open: boolean; onClose: () =>
       </div>
 
       {error && (
-        <div className="text-sm text-rust mb-3 font-mono border-l-2 border-rust pl-3 py-1">{error}</div>
+        <div className="text-sm text-rust mb-3 font-mono border-l-2 border-rust pl-3 py-1">
+          {error}
+        </div>
       )}
 
       {loading && <div className="text-xs text-mist font-mono">loading…</div>}
 
       {!loading && tab === 'friends' && (
-        <FriendsTab friends={friends} statuses={statuses} onAction={load} setError={setError} onClose={onClose} />
+        <FriendsTab
+          friends={friends}
+          statuses={statuses}
+          onAction={load}
+          setError={setError}
+          onClose={onClose}
+        />
       )}
       {!loading && tab === 'requests' && (
         <RequestsTab requests={requests} onAction={load} setError={setError} />
       )}
-      {!loading && tab === 'add' && (
-        <AddFriendTab onSent={load} setError={setError} />
-      )}
+      {!loading && tab === 'add' && <AddFriendTab onSent={load} setError={setError} />}
     </Modal>
   )
 }
@@ -163,17 +183,22 @@ function FriendsTab({
     <ul className="divide-y divide-hairline">
       {friends.map((f) => {
         const status = statuses[f.userId] ?? 'offline'
-        const dotColor = status === 'online' ? 'bg-moss' : status === 'afk' ? 'bg-yellow-500' : 'bg-stone'
+        const dotColor =
+          status === 'online' ? 'bg-moss' : status === 'afk' ? 'bg-yellow-500' : 'bg-stone'
         return (
           <li key={f.userId} className="py-3 flex items-center gap-3 group">
             <div className="relative">
               <span className="w-7 h-7 rounded-full bg-slate border border-hairline flex items-center justify-center text-paper text-xs font-mono uppercase">
                 {f.username.charAt(0)}
               </span>
-              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-vellum ${dotColor}`} />
+              <span
+                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-vellum ${dotColor}`}
+              />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-paper text-sm font-medium tracking-tight truncate">{f.username}</div>
+              <div className="text-paper text-sm font-medium tracking-tight truncate">
+                {f.username}
+              </div>
               <div className="eyebrow">{status}</div>
             </div>
             <div className="flex items-center gap-2">
@@ -239,7 +264,9 @@ function RequestsTab({
   if (requests.incoming.length === 0 && requests.outgoing.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-paper text-lg font-medium tracking-tight mb-2">No pending requests.</div>
+        <div className="text-paper text-lg font-medium tracking-tight mb-2">
+          No pending requests.
+        </div>
       </div>
     )
   }
@@ -257,7 +284,9 @@ function RequestsTab({
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-paper text-sm font-medium tracking-tight">{r.username}</div>
-                  {r.message && <div className="text-xs text-mist mt-0.5 truncate">{r.message}</div>}
+                  {r.message && (
+                    <div className="text-xs text-mist mt-0.5 truncate">{r.message}</div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -369,7 +398,9 @@ function AddFriendTab({
         />
       </div>
       {success && (
-        <div className="text-sm text-moss mb-3 font-mono border-l-2 border-moss pl-3 py-1">{success}</div>
+        <div className="text-sm text-moss mb-3 font-mono border-l-2 border-moss pl-3 py-1">
+          {success}
+        </div>
       )}
       <button type="submit" disabled={submitting || !username.trim()} className="parley-button">
         {submitting ? 'Sending…' : 'Send request →'}

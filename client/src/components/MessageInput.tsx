@@ -1,10 +1,6 @@
 import { useRef, useState } from 'react'
 import { getSocket } from '@/lib/socket'
-import {
-  formatSize,
-  uploadAttachment,
-  type AttachmentMeta,
-} from '@/lib/attachments'
+import { formatSize, uploadAttachment, type AttachmentMeta } from '@/lib/attachments'
 import { sendMessageWithRetry } from '@/lib/send-message'
 import { usePendingStore } from '@/store/pending'
 import { useAuthStore } from '@/store/auth'
@@ -122,14 +118,13 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
   }
 
   const disabledSend =
-    uploading ||
-    (editMsg ? !text.trim() : !text.trim() && attachments.length === 0)
+    uploading || (editMsg ? !text.trim() : !text.trim() && attachments.length === 0)
 
   return (
     <div className="border-t border-hairline bg-vellum">
       {/* Reply / edit indicator */}
       {(replyTo || editMsg) && (
-        <div className="px-8 pt-3 flex items-center gap-2 text-xs">
+        <div className="px-4 md:px-8 pt-3 flex items-center gap-2 text-xs">
           <span className="text-accent">
             {editMsg ? 'Editing message' : `Replying to ${replyTo!.sender.username}`}
           </span>
@@ -139,8 +134,10 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
           <button
             type="button"
             onClick={() => {
-              if (editMsg) { onCancelEdit(); setText('') }
-              else onCancelReply()
+              if (editMsg) {
+                onCancelEdit()
+                setText('')
+              } else onCancelReply()
             }}
             className="text-mist hover:text-rust ml-auto"
           >
@@ -151,7 +148,7 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
 
       {/* Attachment chips */}
       {!editMsg && attachments.length > 0 && (
-        <div className="px-8 pt-3 flex flex-wrap gap-2">
+        <div className="px-4 md:px-8 pt-3 flex flex-wrap gap-2">
           {attachments.map((a) => (
             <div
               key={a.id}
@@ -173,11 +170,9 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
         </div>
       )}
 
-      {error && (
-        <div className="px-8 pt-2 text-xs text-rust">{error}</div>
-      )}
+      {error && <div className="px-8 pt-2 text-xs text-rust">{error}</div>}
 
-      <div className="flex items-end gap-3 px-8 py-4">
+      <div className="flex items-end gap-2 md:gap-3 px-4 md:px-8 py-3 md:py-4">
         {!editMsg && (
           <>
             <input
@@ -194,7 +189,7 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               title="Attach file"
-              className="shrink-0 w-10 h-10 rounded-md border border-hairline-strong bg-slate/50 text-mist hover:text-accent hover:border-accent/50 transition-colors flex items-center justify-center"
+              className="shrink-0 h-10 w-10 box-border rounded-md border border-hairline-strong bg-slate/50 text-mist hover:text-accent hover:border-accent/50 transition-colors flex items-center justify-center"
             >
               {uploading ? (
                 <span className="text-xs font-mono">…</span>
@@ -210,9 +205,9 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Write a message... (Enter to send, Shift+Enter for new line)"
+          placeholder="Write a message…"
           rows={1}
-          className="flex-1 bg-slate/50 text-paper text-sm border border-hairline-strong rounded-md px-4 py-2.5 resize-none outline-none focus:border-accent/50 transition-colors placeholder:text-mist"
+          className="flex-1 box-border bg-slate/50 text-paper text-[13px] md:text-sm border border-hairline-strong rounded-md px-3 md:px-4 py-2 resize-none outline-none focus:border-accent/50 transition-colors placeholder:text-mist leading-6"
           style={{ minHeight: '40px', maxHeight: '120px' }}
           onInput={(e) => {
             const el = e.target as HTMLTextAreaElement
@@ -224,7 +219,7 @@ export function MessageInput({ roomId, replyTo, editMsg, onCancelReply, onCancel
           type="button"
           onClick={send}
           disabled={disabledSend}
-          className="parley-button !w-auto !px-5 !py-2.5 shrink-0"
+          className="shrink-0 h-10 px-5 box-border rounded-md border border-paper bg-paper text-ink text-[13px] font-medium tracking-[0.005em] hover:bg-accent hover:border-accent hover:text-ink disabled:bg-stone disabled:border-stone disabled:text-mist disabled:cursor-not-allowed transition-colors"
         >
           {editMsg ? 'Save' : 'Send'}
         </button>

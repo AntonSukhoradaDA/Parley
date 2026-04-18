@@ -6,7 +6,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MessagesService } from './messages.service';
 
@@ -21,6 +20,10 @@ export class MessagesController {
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.messages.history(roomId, cursor, limit ? parseInt(limit, 10) : undefined);
+    return this.messages.history(
+      roomId,
+      cursor,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 }

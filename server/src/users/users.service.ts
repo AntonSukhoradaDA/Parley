@@ -39,9 +39,12 @@ export class UsersService {
   // ─── User-to-user bans ─────────────────────────────────
 
   async banUser(blockerId: string, blockedId: string) {
-    if (blockerId === blockedId) throw new BadRequestException('Cannot ban yourself');
+    if (blockerId === blockedId)
+      throw new BadRequestException('Cannot ban yourself');
 
-    const target = await this.prisma.user.findUnique({ where: { id: blockedId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: blockedId },
+    });
     if (!target) throw new NotFoundException('User not found');
 
     // Create ban
@@ -50,7 +53,10 @@ export class UsersService {
         data: { blockerId, blockedId },
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
         throw new ConflictException('User already banned');
       }
       throw err;

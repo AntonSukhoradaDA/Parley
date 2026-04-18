@@ -40,9 +40,9 @@ export function Modal({
     >
       <div
         className={
-          (isDrawer
+          isDrawer
             ? `h-full w-full ${width} bg-vellum border-l border-hairline-strong animate-drawer flex flex-col`
-            : `w-full ${width} bg-vellum border border-hairline-strong rounded-[6px] shadow-2xl shadow-black/60 max-h-[88vh] flex flex-col animate-modal`)
+            : `w-full ${width} bg-vellum border border-hairline-strong rounded-[6px] shadow-2xl shadow-black/60 max-h-[88vh] flex flex-col animate-modal`
         }
         onClick={(e) => e.stopPropagation()}
       >

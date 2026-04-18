@@ -44,9 +44,7 @@ export class AttachmentsService {
     const limit = isImage ? MAX_IMAGE_BYTES : MAX_FILE_BYTES;
     if (file.size > limit) {
       throw new BadRequestException(
-        isImage
-          ? 'Image exceeds 3 MB limit'
-          : 'File exceeds 20 MB limit',
+        isImage ? 'Image exceeds 3 MB limit' : 'File exceeds 20 MB limit',
       );
     }
 
@@ -87,10 +85,12 @@ export class AttachmentsService {
     });
     for (const a of found) {
       if (a.uploaderId !== userId) {
-        throw new BadRequestException('Cannot use another user\'s attachment');
+        throw new BadRequestException("Cannot use another user's attachment");
       }
       if (a.roomId !== roomId) {
-        throw new BadRequestException('Attachment does not belong to this room');
+        throw new BadRequestException(
+          'Attachment does not belong to this room',
+        );
       }
       if (a.messageId) {
         throw new BadRequestException('Attachment already linked');
@@ -108,7 +108,10 @@ export class AttachmentsService {
     });
     if (!attachment) throw new NotFoundException('Attachment not found');
 
-    const membership = await this.rooms.getMembership(attachment.roomId, userId);
+    const membership = await this.rooms.getMembership(
+      attachment.roomId,
+      userId,
+    );
     if (!membership) throw new NotFoundException('Attachment not found');
 
     if (!existsSync(attachment.storagePath)) {
@@ -129,7 +132,11 @@ export class AttachmentsService {
       where: { messageId: null, createdAt: { lt: cutoff } },
     });
     for (const o of orphans) {
-      try { unlinkSync(o.storagePath); } catch { /* ignore */ }
+      try {
+        unlinkSync(o.storagePath);
+      } catch {
+        /* ignore */
+      }
     }
     await this.prisma.attachment.deleteMany({
       where: { id: { in: orphans.map((o) => o.id) } },

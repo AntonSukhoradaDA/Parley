@@ -34,28 +34,50 @@ export function ProfileModal({ open, initialTab = 'password', onClose }: Props) 
   }, [open, initialTab])
 
   return (
-    <Modal open={open} onClose={onClose} eyebrow="Profile" title="Your account" variant="drawer" width="max-w-md">
+    <Modal
+      open={open}
+      onClose={onClose}
+      eyebrow="Profile"
+      title="Your account"
+      variant="drawer"
+      width="max-w-md"
+    >
       <div className="flex gap-1 -mt-1 mb-5 border-b border-hairline">
         {(['password', 'sessions', 'bans', 'danger'] as const).map((t, i) => (
           <button
             key={t}
             type="button"
-            onClick={() => { setTab(t); setError(null) }}
+            onClick={() => {
+              setTab(t)
+              setError(null)
+            }}
             className={
               'group px-3 py-2.5 -mb-px border-b transition-colors flex items-baseline gap-1.5 ' +
-              (tab === t ? 'border-accent text-paper' : 'border-transparent text-mist hover:text-chalk')
+              (tab === t
+                ? 'border-accent text-paper'
+                : 'border-transparent text-mist hover:text-chalk')
             }
           >
-            <span className="font-mono text-[10px] text-accent/60">{String(i + 1).padStart(2, '0')}</span>
+            <span className="font-mono text-[10px] text-accent/60">
+              {String(i + 1).padStart(2, '0')}
+            </span>
             <span className="text-sm">
-              {t === 'password' ? 'Password' : t === 'sessions' ? 'Sessions' : t === 'bans' ? 'Blocked' : 'Danger'}
+              {t === 'password'
+                ? 'Password'
+                : t === 'sessions'
+                  ? 'Sessions'
+                  : t === 'bans'
+                    ? 'Blocked'
+                    : 'Danger'}
             </span>
           </button>
         ))}
       </div>
 
       {error && (
-        <div className="text-sm text-rust mb-3 font-mono border-l-2 border-rust pl-3 py-1">{error}</div>
+        <div className="text-sm text-rust mb-3 font-mono border-l-2 border-rust pl-3 py-1">
+          {error}
+        </div>
       )}
 
       {tab === 'password' && <PasswordTab setError={setError} />}
@@ -88,8 +110,12 @@ function PasswordTab({ setError }: { setError: (e: string | null) => void }) {
     setSubmitting(true)
     try {
       await changePassword(current, next)
-      setSuccess('Password updated. Other sessions remain active; sign them out via the Sessions tab.')
-      setCurrent(''); setNext(''); setConfirm('')
+      setSuccess(
+        'Password updated. Other sessions remain active; sign them out via the Sessions tab.',
+      )
+      setCurrent('')
+      setNext('')
+      setConfirm('')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to update password')
     } finally {
@@ -135,7 +161,9 @@ function PasswordTab({ setError }: { setError: (e: string | null) => void }) {
         />
       </div>
       {success && (
-        <div className="text-sm text-moss mb-3 font-mono border-l-2 border-moss pl-3 py-1">{success}</div>
+        <div className="text-sm text-moss mb-3 font-mono border-l-2 border-moss pl-3 py-1">
+          {success}
+        </div>
       )}
       <button
         type="submit"
@@ -160,7 +188,9 @@ function SessionsTab({ setError }: { setError: (e: string | null) => void }) {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleRevoke(id: string) {
     setBusyId(id)
@@ -224,7 +254,9 @@ function BansTab({ setError }: { setError: (e: string | null) => void }) {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleUnban(userId: string) {
     setBusyId(userId)
@@ -258,7 +290,9 @@ function BansTab({ setError }: { setError: (e: string | null) => void }) {
             {b.username.charAt(0)}
           </span>
           <div className="flex-1 min-w-0">
-            <div className="text-paper text-sm font-medium tracking-tight truncate">{b.username}</div>
+            <div className="text-paper text-sm font-medium tracking-tight truncate">
+              {b.username}
+            </div>
             <div className="eyebrow">blocked {new Date(b.createdAt).toLocaleDateString()}</div>
           </div>
           <button
@@ -302,7 +336,8 @@ function DangerTab({ setError }: { setError: (e: string | null) => void }) {
         also be removed.
       </p>
       <p className="text-sm text-mist leading-relaxed mb-5">
-        To confirm, type your username <span className="font-mono text-paper">{username}</span> below.
+        To confirm, type your username <span className="font-mono text-paper">{username}</span>{' '}
+        below.
       </p>
       <input
         type="text"

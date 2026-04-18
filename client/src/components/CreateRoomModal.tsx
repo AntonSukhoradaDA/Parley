@@ -133,9 +133,7 @@ function VisibilityOption({
       }
     >
       <div className="flex items-baseline gap-2">
-        <span className={'font-mono ' + (active ? 'text-accent' : 'text-mist')}>
-          {glyph}
-        </span>
+        <span className={'font-mono ' + (active ? 'text-accent' : 'text-mist')}>{glyph}</span>
         <span className="text-base font-medium tracking-tight leading-none">{label}</span>
       </div>
       <div className="eyebrow mt-1.5">{hint}</div>

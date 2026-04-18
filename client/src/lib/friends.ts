@@ -44,8 +44,7 @@ export const rejectRequest = (id: string) =>
 export const removeFriend = (userId: string) =>
   api<void>(`/api/friends/${userId}`, { method: 'DELETE' })
 
-export const banUser = (userId: string) =>
-  api<void>(`/api/users/ban/${userId}`, { method: 'POST' })
+export const banUser = (userId: string) => api<void>(`/api/users/ban/${userId}`, { method: 'POST' })
 
 export const unbanUser = (userId: string) =>
   api<void>(`/api/users/ban/${userId}`, { method: 'DELETE' })

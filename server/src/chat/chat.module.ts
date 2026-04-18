@@ -11,7 +11,10 @@ import { RoomsModule } from '../rooms/rooms.module';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET', 'parley-dev-secret-change-in-production'),
+        secret: config.get<string>(
+          'JWT_SECRET',
+          'parley-dev-secret-change-in-production',
+        ),
         signOptions: { expiresIn: '15m' },
       }),
     }),

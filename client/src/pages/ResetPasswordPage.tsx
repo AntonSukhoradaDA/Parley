@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthCard, FormField, buttonClass, inputClass } from '@/components/AuthCard'
 import { api, ApiError } from '@/lib/api'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const [token, setToken] = useState(params.get('token') ?? '')
   const [password, setPassword] = useState('')
@@ -42,20 +44,17 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <AuthCard eyebrow="Settled" title="Password updated">
-        <p className="text-chalk/80 leading-relaxed">
-          You can now sign in with your new password. Sending you back to the
-          door…
-        </p>
+      <AuthCard eyebrow={t('auth.reset.eyebrow')} title={t('auth.reset.title')}>
+        <p className="text-chalk/80 leading-relaxed">{t('auth.reset.success')}</p>
       </AuthCard>
     )
   }
 
   return (
     <AuthCard
-      eyebrow="Recover — 02"
-      title="Reset password"
-      subtitle="Choose something you'll remember."
+      eyebrow={t('auth.reset.eyebrow')}
+      title={t('auth.reset.title')}
+      subtitle={t('auth.reset.subtitle')}
     >
       <form onSubmit={onSubmit} noValidate>
         {!params.get('token') && (
@@ -65,12 +64,11 @@ export function ResetPasswordPage() {
               className={inputClass}
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="paste the token from your email"
               required
             />
           </FormField>
         )}
-        <FormField label="New password" hint="8 or more">
+        <FormField label={t('auth.reset.password')} hint="8+">
           <input
             type="password"
             className={inputClass}
@@ -81,7 +79,7 @@ export function ResetPasswordPage() {
             required
           />
         </FormField>
-        <FormField label="Confirm new password">
+        <FormField label={t('auth.reset.confirm')}>
           <input
             type="password"
             className={inputClass}
@@ -101,12 +99,12 @@ export function ResetPasswordPage() {
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Updating…' : 'Update password →'}
+          {submitting ? t('auth.reset.submitting') : t('auth.reset.submit')}
         </button>
       </form>
       <p className="mt-8 pt-6 border-t border-hairline text-sm text-mist">
         <Link className="parley-link" to="/login">
-          Back to sign in
+          {t('auth.forgot.backToLogin')}
         </Link>
       </p>
     </AuthCard>

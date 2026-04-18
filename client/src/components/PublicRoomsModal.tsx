@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/api'
 import { joinRoom, listPublicRooms, type PublicRoom } from '@/lib/rooms'
 import { Modal } from './Modal'
+import { SearchInput } from '@/components/ui'
 
 export function PublicRoomsModal({
   open,
@@ -28,8 +29,7 @@ export function PublicRoomsModal({
         const data = await listPublicRooms(search.trim() || undefined)
         if (!cancelled) setRooms(data)
       } catch (err) {
-        if (!cancelled)
-          setError(err instanceof ApiError ? err.message : 'Failed to load rooms')
+        if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load rooms')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -54,42 +54,26 @@ export function PublicRoomsModal({
   }
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      eyebrow="Index"
-      title="Browse the floor"
-      width="max-w-xl"
-    >
-      <div className="relative mb-5">
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 font-mono text-mist text-sm">
-          ⌕
-        </span>
-        <input
-          type="text"
-          className="parley-input pl-6"
-          placeholder="Search by name or description…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+    <Modal open={open} onClose={onClose} eyebrow="Index" title="Browse the floor" width="max-w-xl">
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="Search by name or description…"
+        className="mb-5"
+      />
 
       {error && (
         <div className="text-sm text-rust mb-3 font-mono border-l-2 border-rust pl-3 py-1">
           {error}
         </div>
       )}
-      {loading && (
-        <div className="text-xs text-mist font-mono py-2">loading the index…</div>
-      )}
+      {loading && <div className="text-xs text-mist font-mono py-2">loading the index…</div>}
       {!loading && rooms.length === 0 && (
         <div className="text-center py-10">
           <div className="text-paper text-xl font-medium tracking-tight">
             Nothing on the boards.
           </div>
-          <p className="text-mist text-sm mt-2">
-            No public rooms match that query.
-          </p>
+          <p className="text-mist text-sm mt-2">No public rooms match that query.</p>
         </div>
       )}
 

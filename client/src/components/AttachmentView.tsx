@@ -43,7 +43,7 @@ export function AttachmentView({ attachment }: Props) {
             type="button"
             onClick={() => downloadAttachment(attachment.id)}
             className="block"
-            title={`${attachment.filename} — click to download`}
+            title={`${attachment.filename} - click to download`}
           >
             <img
               src={imgUrl}

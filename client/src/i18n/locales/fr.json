@@ -1,0 +1,168 @@
+{
+  "common": {
+    "signIn": "Se connecter",
+    "signOut": "Déconnexion",
+    "register": "S'inscrire",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "open": "Ouvrir",
+    "close": "Fermer",
+    "loading": "chargement…",
+    "back": "Retour"
+  },
+  "lang": {
+    "label": "Langue"
+  },
+  "nav": {
+    "publicRooms": "Salons publics",
+    "privateRooms": "Salons privés",
+    "contacts": "Contacts",
+    "sessions": "Sessions",
+    "profile": "Profil",
+    "openChats": "Ouvrir les chats",
+    "home": "Accueil"
+  },
+  "landing": {
+    "header": {
+      "signIn": "Se connecter",
+      "register": "S'inscrire"
+    },
+    "hero": {
+      "eyebrow": "Un chat web classique",
+      "tagline": "Une salle tranquille. Une longue table. Une correspondance honnête entretenue par le choix de ses interlocuteurs.",
+      "createAccount": "Créer un compte",
+      "signIn": "Se connecter"
+    },
+    "features": {
+      "eyebrow": "Ce qu'il y a dedans",
+      "heading_line1": "Tout ce qu'un chat classique exige.",
+      "heading_line2": "Rien de plus.",
+      "rooms": {
+        "eyebrow": "Salons",
+        "title": "Publics et privés",
+        "body": "Ouvrez un salon à tous ou gardez-le sur invitation. Le propriétaire règle la visibilité ; les admins modèrent."
+      },
+      "direct": {
+        "eyebrow": "Direct",
+        "title": "Messages privés",
+        "body": "Dialogues personnels réservés aux amis, avec les mêmes réponses, éditions et pièces jointes que les salons."
+      },
+      "presence": {
+        "eyebrow": "Présence",
+        "title": "En ligne, AFK, hors ligne",
+        "body": "Présence à faible latence, onglet par onglet. Plus d'une minute d'inactivité partout et vous passez en AFK automatiquement."
+      },
+      "attachments": {
+        "eyebrow": "Pièces jointes",
+        "title": "Fichiers, images, collages",
+        "body": "Jusqu'à 20 Mo par fichier. Collez des images directement depuis le presse-papiers. Un commentaire par pièce jointe."
+      },
+      "history": {
+        "eyebrow": "Historique",
+        "title": "Des années, défilables",
+        "body": "Historique persistant à défilement infini — remontez 100 000 messages sans que le client ne bronche."
+      },
+      "moderation": {
+        "eyebrow": "Modération",
+        "title": "Propriétaire, admins, bannissements",
+        "body": "Les admins peuvent retirer ou bannir ; le propriétaire peut supprimer le salon. Les bannissements personnels figent les MP en lecture seule."
+      }
+    },
+    "cta": {
+      "title": "Tirez-vous une chaise.",
+      "body": "Un chat de groupe pensé pour les longues conversations - historique persistant, présence à faible latence, et le calme d'une salle que vous contrôlez.",
+      "start": "Commencer une session →"
+    },
+    "footer": {
+      "copyright": "© 2026 Parley. Tous droits réservés.",
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d'utilisation"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Reprendre",
+      "title": "Bon retour",
+      "subtitle": "Reprenez la conversation là où vous l'aviez laissée.",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter →",
+      "submitting": "Connexion…",
+      "forgot": "Mot de passe oublié ?",
+      "noAccount": "Pas encore de compte ?",
+      "register": "S'inscrire"
+    },
+    "register": {
+      "eyebrow": "Commencer",
+      "title": "Créer un compte",
+      "subtitle": "Choisissez un nom ; entrez dans la salle.",
+      "email": "E-mail",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Créer le compte →",
+      "submitting": "Création…",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signIn": "Se connecter",
+      "passwordsDontMatch": "Les mots de passe ne correspondent pas"
+    },
+    "forgot": {
+      "eyebrow": "Récupérer",
+      "title": "Mot de passe oublié",
+      "subtitle": "Entrez votre e-mail et nous vous enverrons un lien pour en définir un nouveau.",
+      "email": "E-mail",
+      "submit": "Envoyer le lien →",
+      "submitting": "Envoi…",
+      "backToLogin": "Retour à la connexion",
+      "success": "Si un compte existe pour cet e-mail, un lien de réinitialisation est en route."
+    },
+    "reset": {
+      "eyebrow": "Récupérer",
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+      "password": "Nouveau mot de passe",
+      "confirm": "Confirmer le mot de passe",
+      "submit": "Définir le mot de passe →",
+      "submitting": "Enregistrement…",
+      "success": "Mot de passe mis à jour. Redirection vers la connexion…"
+    }
+  },
+  "chat": {
+    "breadcrumbSeparator": "/",
+    "empty": {
+      "eyebrow": "Aucun salon sélectionné",
+      "title_line1": "Choisissez un fil,",
+      "title_line2": "ou lancez-en un.",
+      "body": "Une parley commence quand quelqu'un choisit la table. Ouvrez votre propre salon ou rejoignez ceux déjà en cours.",
+      "newRoom": "Nouveau salon",
+      "browse": "Parcourir les salons publics"
+    }
+  },
+  "sidebar": {
+    "collapse": "Réduire",
+    "expand": "Déployer",
+    "navigator": "Navigation",
+    "roomsContacts": "Salons · Contacts",
+    "searchPlaceholder": "Rechercher salons et contacts",
+    "sections": {
+      "rooms": "Salons",
+      "public": "Publics",
+      "private": "Privés",
+      "contacts": "Contacts",
+      "friends": "Amis"
+    },
+    "createRoom": "Créer un salon",
+    "empty": {
+      "title": "Bureau vide.",
+      "body_line1": "Ouvrez votre propre salon,",
+      "body_line2": "ou ajoutez un contact avec qui parler."
+    },
+    "hints": {
+      "noMatches": "Aucun résultat.",
+      "noneYet": "Aucun pour l'instant.",
+      "noConversations": "Aucune conversation.",
+      "noContacts": "Aucun contact pour l'instant."
+    },
+    "frozen": "figé"
+  }
+}

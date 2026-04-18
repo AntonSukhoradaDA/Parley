@@ -28,24 +28,26 @@ export function sendMessageWithRetry(payload: SendPayload) {
 
   socket
     .timeout(ACK_TIMEOUT_MS)
-    .emit('message:send', body, (err: unknown, ack: { ok?: boolean; error?: string } | undefined) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timeout)
-      if (err) {
-        usePendingStore.getState().markFailed(tempId, roomId, 'No response')
-        return
-      }
-      if (!ack?.ok) {
-        usePendingStore
-          .getState()
-          .markFailed(tempId, roomId, ack?.error ?? 'Failed to send')
-        return
-      }
-      // Success: broadcast 'message:new' will render the real message. We drop the pending
-      // entry here; de-dup is handled in MessageList via content/sender/time match.
-      usePendingStore.getState().remove(tempId, roomId)
-    })
+    .emit(
+      'message:send',
+      body,
+      (err: unknown, ack: { ok?: boolean; error?: string } | undefined) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        if (err) {
+          usePendingStore.getState().markFailed(tempId, roomId, 'No response')
+          return
+        }
+        if (!ack?.ok) {
+          usePendingStore.getState().markFailed(tempId, roomId, ack?.error ?? 'Failed to send')
+          return
+        }
+        // Success: broadcast 'message:new' will render the real message. We drop the pending
+        // entry here; de-dup is handled in MessageList via content/sender/time match.
+        usePendingStore.getState().remove(tempId, roomId)
+      },
+    )
 }
 
 export function retryPending(msg: PendingMessage) {

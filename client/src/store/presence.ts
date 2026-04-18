@@ -16,11 +16,9 @@ export const usePresenceStore = create<PresenceState>((set) => ({
   statuses: {},
   unreadCounts: {},
 
-  setStatus: (userId, status) =>
-    set((s) => ({ statuses: { ...s.statuses, [userId]: status } })),
+  setStatus: (userId, status) => set((s) => ({ statuses: { ...s.statuses, [userId]: status } })),
 
-  setBulkStatuses: (statuses) =>
-    set((s) => ({ statuses: { ...s.statuses, ...statuses } })),
+  setBulkStatuses: (statuses) => set((s) => ({ statuses: { ...s.statuses, ...statuses } })),
 
   initUnread: (counts) => set({ unreadCounts: counts }),
 

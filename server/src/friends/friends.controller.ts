@@ -10,7 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthUser,
+} from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FriendsService } from './friends.service';
 

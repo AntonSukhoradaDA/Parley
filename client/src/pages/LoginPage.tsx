@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthCard, FormField, buttonClass, inputClass } from '@/components/AuthCard'
 import { login } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -17,7 +19,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       await login({ email, password })
-      navigate('/', { replace: true })
+      navigate('/chats', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong')
     } finally {
@@ -27,12 +29,12 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      eyebrow="Resume — 01"
-      title="Sign in"
-      subtitle="Pick up the conversation where you left it."
+      eyebrow={t('auth.login.eyebrow')}
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
     >
       <form onSubmit={onSubmit} noValidate>
-        <FormField label="Email">
+        <FormField label={t('auth.login.email')}>
           <input
             type="email"
             className={inputClass}
@@ -43,7 +45,7 @@ export function LoginPage() {
             required
           />
         </FormField>
-        <FormField label="Password">
+        <FormField label={t('auth.login.password')}>
           <input
             type="password"
             className={inputClass}
@@ -63,17 +65,17 @@ export function LoginPage() {
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Signing in…' : 'Continue →'}
+          {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </button>
       </form>
       <div className="mt-8 pt-6 border-t border-hairline flex flex-col gap-3 text-sm text-mist">
         <Link className="parley-link self-start" to="/forgot-password">
-          Forgot password?
+          {t('auth.login.forgot')}
         </Link>
         <span>
-          New to Parley?{' '}
+          {t('auth.login.noAccount')}{' '}
           <Link className="parley-link" to="/register">
-            Open an account
+            {t('auth.login.register')}
           </Link>
         </span>
       </div>

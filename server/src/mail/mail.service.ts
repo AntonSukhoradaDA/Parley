@@ -31,7 +31,12 @@ export class MailService implements OnModuleInit {
     this.logger.log(`SMTP transport configured (${host}:${port})`);
   }
 
-  async send(opts: { to: string; subject: string; text: string; html?: string }) {
+  async send(opts: {
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }) {
     try {
       const info = await this.transporter.sendMail({
         from: this.from,
@@ -40,7 +45,9 @@ export class MailService implements OnModuleInit {
         text: opts.text,
         html: opts.html,
       });
-      this.logger.log(`Sent "${opts.subject}" to ${opts.to} (id=${info.messageId})`);
+      this.logger.log(
+        `Sent "${opts.subject}" to ${opts.to} (id=${info.messageId})`,
+      );
     } catch (err) {
       this.logger.error(
         `Failed to send "${opts.subject}" to ${opts.to}: ${(err as Error).message}`,

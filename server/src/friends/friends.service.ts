@@ -5,7 +5,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -17,7 +16,8 @@ export class FriendsService {
 
     const target = await this.prisma.user.findUnique({ where: { username } });
     if (!target) throw new NotFoundException('User not found');
-    if (target.id === requesterId) throw new BadRequestException('Cannot send a friend request to yourself');
+    if (target.id === requesterId)
+      throw new BadRequestException('Cannot send a friend request to yourself');
 
     // Check user-to-user ban in either direction
     const ban = await this.prisma.userBan.findFirst({
@@ -28,7 +28,10 @@ export class FriendsService {
         ],
       },
     });
-    if (ban) throw new ForbiddenException('Cannot send friend request — user is blocked');
+    if (ban)
+      throw new ForbiddenException(
+        'Cannot send friend request — user is blocked',
+      );
 
     // Check for existing friendship in either direction
     const existing = await this.prisma.friendship.findFirst({
@@ -114,7 +117,10 @@ export class FriendsService {
     });
     if (!friendship) throw new NotFoundException('Friend request not found');
     // Either side can cancel/reject
-    if (friendship.addresseeId !== userId && friendship.requesterId !== userId) {
+    if (
+      friendship.addresseeId !== userId &&
+      friendship.requesterId !== userId
+    ) {
       throw new ForbiddenException('Not your friend request');
     }
 
@@ -148,8 +154,7 @@ export class FriendsService {
     });
 
     return friendships.map((f) => {
-      const friend =
-        f.requesterId === userId ? f.addressee : f.requester;
+      const friend = f.requesterId === userId ? f.addressee : f.requester;
       return {
         friendshipId: f.id,
         userId: friend.id,

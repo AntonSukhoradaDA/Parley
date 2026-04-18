@@ -22,10 +22,7 @@ export const useRoomsStore = create<RoomsState>((set) => ({
   async refresh() {
     set({ loading: true, error: null })
     try {
-      const [rooms, personalChats] = await Promise.all([
-        listMyRooms(),
-        listPersonalChats(),
-      ])
+      const [rooms, personalChats] = await Promise.all([listMyRooms(), listPersonalChats()])
       set({ rooms, personalChats, loading: false })
     } catch (err) {
       set({ loading: false, error: err instanceof Error ? err.message : 'Failed to load rooms' })

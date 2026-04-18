@@ -1,0 +1,168 @@
+{
+  "common": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "register": "Registrarse",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "open": "Abrir",
+    "close": "Cerrar",
+    "loading": "cargando…",
+    "back": "Atrás"
+  },
+  "lang": {
+    "label": "Idioma"
+  },
+  "nav": {
+    "publicRooms": "Salas públicas",
+    "privateRooms": "Salas privadas",
+    "contacts": "Contactos",
+    "sessions": "Sesiones",
+    "profile": "Perfil",
+    "openChats": "Abrir chats",
+    "home": "Inicio"
+  },
+  "landing": {
+    "header": {
+      "signIn": "Iniciar sesión",
+      "register": "Registrarse"
+    },
+    "hero": {
+      "eyebrow": "Un chat web clásico",
+      "tagline": "Una sala tranquila. Una mesa larga. Una correspondencia honesta mantenida por la compañía que eliges.",
+      "createAccount": "Crear cuenta",
+      "signIn": "Iniciar sesión"
+    },
+    "features": {
+      "eyebrow": "Qué incluye",
+      "heading_line1": "Todo lo que un chat clásico necesita.",
+      "heading_line2": "Nada que sobre.",
+      "rooms": {
+        "eyebrow": "Salas",
+        "title": "Públicas y privadas",
+        "body": "Abre una sala al público o mantenla por invitación. El propietario define la visibilidad; los admins moderan."
+      },
+      "direct": {
+        "eyebrow": "Directo",
+        "title": "Mensajes uno a uno",
+        "body": "Diálogos personales entre amigos, con las mismas respuestas, ediciones y adjuntos que las salas."
+      },
+      "presence": {
+        "eyebrow": "Presencia",
+        "title": "En línea, AFK, desconectado",
+        "body": "Presencia de baja latencia entre pestañas. Más de un minuto inactivo en todas y pasas a AFK automáticamente."
+      },
+      "attachments": {
+        "eyebrow": "Adjuntos",
+        "title": "Archivos, imágenes, pegados",
+        "body": "Sube hasta 20 MB por archivo. Pega imágenes desde el portapapeles. Un comentario por adjunto."
+      },
+      "history": {
+        "eyebrow": "Historial",
+        "title": "Años, deslizables",
+        "body": "Historial persistente con desplazamiento infinito - recorre 100.000 mensajes sin que el cliente se trabe."
+      },
+      "moderation": {
+        "eyebrow": "Moderación",
+        "title": "Propietario, admins, bloqueos",
+        "body": "Los admins pueden quitar o banear; el propietario puede eliminar la sala. Los bloqueos personales congelan los MD en solo lectura."
+      }
+    },
+    "cta": {
+      "title": "Acerca una silla.",
+      "body": "Un chat grupal hecho para conversaciones largas - historial persistente, presencia de baja latencia y la calma de una sala que controlas.",
+      "start": "Empezar una sesión →"
+    },
+    "footer": {
+      "copyright": "© 2026 Parley. Todos los derechos reservados.",
+      "privacy": "Política de privacidad",
+      "terms": "Términos de uso"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Reanudar",
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Retoma la conversación donde quedó.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión →",
+      "submitting": "Iniciando sesión…",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿Aún no tienes cuenta?",
+      "register": "Registrarse"
+    },
+    "register": {
+      "eyebrow": "Comenzar",
+      "title": "Crear una cuenta",
+      "subtitle": "Reclama un nombre; entra a la sala.",
+      "email": "Correo electrónico",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Crear cuenta →",
+      "submitting": "Creando…",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión",
+      "passwordsDontMatch": "Las contraseñas no coinciden"
+    },
+    "forgot": {
+      "eyebrow": "Recuperar",
+      "title": "Contraseña olvidada",
+      "subtitle": "Introduce tu correo y te enviaremos un enlace para definir una nueva.",
+      "email": "Correo electrónico",
+      "submit": "Enviar enlace →",
+      "submitting": "Enviando…",
+      "backToLogin": "Volver a iniciar sesión",
+      "success": "Si existe una cuenta para ese correo, ya va en camino el enlace de recuperación."
+    },
+    "reset": {
+      "eyebrow": "Recuperar",
+      "title": "Restablecer contraseña",
+      "subtitle": "Elige una nueva contraseña para tu cuenta.",
+      "password": "Nueva contraseña",
+      "confirm": "Confirmar contraseña",
+      "submit": "Establecer contraseña →",
+      "submitting": "Guardando…",
+      "success": "Contraseña actualizada. Redirigiendo al inicio de sesión…"
+    }
+  },
+  "chat": {
+    "breadcrumbSeparator": "/",
+    "empty": {
+      "eyebrow": "Ninguna sala seleccionada",
+      "title_line1": "Elige un hilo,",
+      "title_line2": "o empieza uno.",
+      "body": "Un parley empieza cuando alguien elige la mesa. Abre una sala propia o súmate a las que ya están en marcha.",
+      "newRoom": "Nueva sala",
+      "browse": "Explorar salas públicas"
+    }
+  },
+  "sidebar": {
+    "collapse": "Contraer",
+    "expand": "Expandir",
+    "navigator": "Navegador",
+    "roomsContacts": "Salas · Contactos",
+    "searchPlaceholder": "Buscar salas y contactos",
+    "sections": {
+      "rooms": "Salas",
+      "public": "Públicas",
+      "private": "Privadas",
+      "contacts": "Contactos",
+      "friends": "Amigos"
+    },
+    "createRoom": "Crear sala",
+    "empty": {
+      "title": "Escritorio vacío.",
+      "body_line1": "Abre una sala propia,",
+      "body_line2": "o añade un contacto con quien hablar."
+    },
+    "hints": {
+      "noMatches": "Sin coincidencias.",
+      "noneYet": "Ninguna aún.",
+      "noConversations": "Sin conversaciones.",
+      "noContacts": "Sin contactos aún."
+    },
+    "frozen": "congelado"
+  }
+}

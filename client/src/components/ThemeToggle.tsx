@@ -1,54 +1,47 @@
-import { useThemeStore } from '@/store/theme'
+import type { ComponentType, SVGProps } from 'react'
+import { useThemeStore, type Theme } from '@/store/theme'
+import { SunIcon, MoonIcon, SystemIcon } from '@/components/icons'
+
+type IconComp = ComponentType<SVGProps<SVGSVGElement>>
+
+const OPTIONS: { value: Theme; label: string; Icon: IconComp }[] = [
+  { value: 'light', label: 'Light', Icon: SunIcon },
+  { value: 'system', label: 'System', Icon: SystemIcon },
+  { value: 'dark', label: 'Dark', Icon: MoonIcon },
+]
 
 export function ThemeToggle() {
   const theme = useThemeStore((s) => s.theme)
-  const toggle = useThemeStore((s) => s.toggle)
-  const next = theme === 'dark' ? 'light' : 'dark'
+  const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="parley-icon-button"
-      title={`Switch to ${next} theme`}
-      aria-label={`Switch to ${next} theme`}
+    <div
+      role="radiogroup"
+      aria-label="Theme"
+      className="inline-flex items-center rounded-[var(--radius-soft)] border border-[var(--color-hairline-strong)] bg-[var(--color-vellum)] p-[2px]"
     >
-      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-    </button>
-  )
-}
-
-function SunIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
-  )
-}
-
-function MoonIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
+      {OPTIONS.map(({ value, label, Icon }) => {
+        const active = theme === value
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={label}
+            title={label}
+            onClick={() => setTheme(value)}
+            className={[
+              'inline-flex h-7 w-7 items-center justify-center rounded-[3px] transition-colors',
+              active
+                ? 'bg-[var(--color-stone)] text-[var(--color-paper)]'
+                : 'text-[var(--color-mist)] hover:text-[var(--color-chalk)]',
+            ].join(' ')}
+          >
+            <Icon width={13} height={13} />
+          </button>
+        )
+      })}
+    </div>
   )
 }

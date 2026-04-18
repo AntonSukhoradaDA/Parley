@@ -20,10 +20,7 @@ export async function register(input: {
   return res.user
 }
 
-export async function login(input: {
-  email: string
-  password: string
-}): Promise<User> {
+export async function login(input: { email: string; password: string }): Promise<User> {
   const res = await api<AuthResponse>('/api/auth/login', {
     method: 'POST',
     auth: false,

@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthCard, FormField, buttonClass, inputClass } from '@/components/AuthCard'
 import { register } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -22,7 +24,7 @@ export function RegisterPage() {
     setSubmitting(true)
     try {
       await register({ email, username, password })
-      navigate('/', { replace: true })
+      navigate('/chats', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong')
     } finally {
@@ -32,12 +34,12 @@ export function RegisterPage() {
 
   return (
     <AuthCard
-      eyebrow="Begin — 01"
-      title="Open an account"
-      subtitle="Three pieces of paper. Then the room is yours."
+      eyebrow={t('auth.register.eyebrow')}
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
     >
       <form onSubmit={onSubmit} noValidate>
-        <FormField label="Email">
+        <FormField label={t('auth.register.email')}>
           <input
             type="email"
             className={inputClass}
@@ -48,7 +50,7 @@ export function RegisterPage() {
             required
           />
         </FormField>
-        <FormField label="Username" hint="3–32 chars · a–z, 0–9, . _ -">
+        <FormField label={t('auth.register.username')} hint="3-32 · a-z 0-9 . _ -">
           <input
             type="text"
             className={inputClass}
@@ -58,11 +60,10 @@ export function RegisterPage() {
             minLength={3}
             maxLength={32}
             pattern="[a-zA-Z0-9_.\-]+"
-            placeholder="how others will know you"
             required
           />
         </FormField>
-        <FormField label="Password" hint="8 or more">
+        <FormField label={t('auth.register.password')} hint="8+">
           <input
             type="password"
             className={inputClass}
@@ -70,7 +71,6 @@ export function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             minLength={8}
-            placeholder="something you'll remember"
             required
           />
         </FormField>
@@ -83,13 +83,13 @@ export function RegisterPage() {
           </div>
         )}
         <button type="submit" disabled={submitting} className={buttonClass}>
-          {submitting ? 'Opening…' : 'Open account →'}
+          {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
         </button>
       </form>
       <p className="mt-8 pt-6 border-t border-hairline text-sm text-mist">
-        Already aboard?{' '}
+        {t('auth.register.haveAccount')}{' '}
         <Link className="parley-link" to="/login">
-          Sign in instead
+          {t('auth.register.signIn')}
         </Link>
       </p>
     </AuthCard>

@@ -99,13 +99,6 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
     }
   }, [roomId])
 
-  // Track scroll position
-  const handleScroll = useCallback(() => {
-    const el = containerRef.current
-    if (!el) return
-    wasAtBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 40
-  }, [])
-
   // Infinite scroll — load older
   const loadOlder = useCallback(async () => {
     if (!hasMore || loadingMore || !cursor) return
@@ -123,6 +116,16 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
     })
   }, [roomId, cursor, hasMore, loadingMore])
 
+  // Track scroll position + auto-load older as user nears the top
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    wasAtBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 40
+    if (el.scrollTop < 200 && hasMore && !loadingMore && !loadingInitial) {
+      void loadOlder()
+    }
+  }, [hasMore, loadingMore, loadingInitial, loadOlder])
+
   function handleDelete(msgId: string) {
     const socket = getSocket()
     socket.emit('message:delete', { messageId: msgId, roomId })
@@ -136,18 +139,22 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-8 py-4"
+      className="flex-1 overflow-y-auto px-4 md:px-8 py-4"
     >
       {hasMore && (
-        <div className="text-center py-3">
-          <button
-            type="button"
-            onClick={loadOlder}
-            disabled={loadingMore}
-            className="text-xs text-accent hover:underline"
-          >
-            {loadingMore ? 'Loading...' : 'Load older messages'}
-          </button>
+        <div className="text-center py-3 text-xs font-mono text-mist">
+          {loadingMore ? (
+            'Loading older messages…'
+          ) : (
+            <button type="button" onClick={loadOlder} className="text-accent hover:underline">
+              Load older messages
+            </button>
+          )}
+        </div>
+      )}
+      {!hasMore && messages.length > 0 && (
+        <div className="text-center py-3 text-[11px] font-mono text-mist/60">
+          - beginning of history -
         </div>
       )}
 
@@ -182,7 +189,9 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
               {/* Reply quote */}
               {msg.replyTo && (
                 <div className="flex items-center gap-1.5 mb-1 pl-3 border-l-2 border-accent/30">
-                  <span className="text-accent/60 text-xs font-mono">{msg.replyTo.sender.username}</span>
+                  <span className="text-accent/60 text-xs font-mono">
+                    {msg.replyTo.sender.username}
+                  </span>
                   <span className="text-mist text-xs truncate max-w-xs">{msg.replyTo.content}</span>
                 </div>
               )}
@@ -197,9 +206,7 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
                       {msg.sender.username}
                     </span>
                     <span className="text-mist text-xs font-mono">{formatTime(msg.createdAt)}</span>
-                    {msg.editedAt && (
-                      <span className="text-mist/60 text-xs italic">edited</span>
-                    )}
+                    {msg.editedAt && <span className="text-mist/60 text-xs italic">edited</span>}
                   </div>
                   {msg.content && (
                     <p className="text-chalk text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -267,7 +274,9 @@ export function MessageList({ roomId, onReply, onEdit }: Props) {
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-medium text-accent">{p.sender.username}</span>
                   <span className="text-mist text-xs font-mono">
-                    {p.status === 'sending' ? 'sending…' : (
+                    {p.status === 'sending' ? (
+                      'sending…'
+                    ) : (
                       <span className="text-rust">failed{p.error ? `: ${p.error}` : ''}</span>
                     )}
                   </span>

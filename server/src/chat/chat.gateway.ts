@@ -122,9 +122,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('message:send')
   async onSend(
     @ConnectedSocket() client: AuthSocket,
-    @MessageBody() data: { roomId: string; content: string; replyToId?: string; attachmentIds?: string[] },
+    @MessageBody()
+    data: {
+      roomId: string;
+      content: string;
+      replyToId?: string;
+      attachmentIds?: string[];
+    },
   ) {
-    const membership = await this.rooms.getMembership(data.roomId, client.userId);
+    const membership = await this.rooms.getMembership(
+      data.roomId,
+      client.userId,
+    );
     if (!membership) return { error: 'Not a member of this room' };
 
     try {
@@ -138,9 +147,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(`room:${data.roomId}`).emit('message:new', message);
 
       // Push unread bump to all room members except sender
-      this.server.to(`room:${data.roomId}`).except(`user:${client.userId}`).emit('unread:bump', {
-        roomId: data.roomId,
-      });
+      this.server
+        .to(`room:${data.roomId}`)
+        .except(`user:${client.userId}`)
+        .emit('unread:bump', {
+          roomId: data.roomId,
+        });
 
       return { ok: true, message };
     } catch (err: any) {
@@ -154,7 +166,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { messageId: string; content: string; roomId: string },
   ) {
     try {
-      const message = await this.messages.edit(data.messageId, client.userId, data.content);
+      const message = await this.messages.edit(
+        data.messageId,
+        client.userId,
+        data.content,
+      );
       this.server.to(`room:${data.roomId}`).emit('message:edited', message);
       return { ok: true, message };
     } catch (err: any) {
@@ -186,7 +202,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthSocket,
     @MessageBody() data: { roomId: string },
   ) {
-    const membership = await this.rooms.getMembership(data.roomId, client.userId);
+    const membership = await this.rooms.getMembership(
+      data.roomId,
+      client.userId,
+    );
     if (!membership) return { error: 'Not a member' };
     client.join(`room:${data.roomId}`);
     return { ok: true };

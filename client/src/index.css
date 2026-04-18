@@ -2,20 +2,20 @@
 
 @theme {
   /* ─── Color (token names; values come from :root rules below) ─────── */
-  --color-ink: #0a0e0d;
-  --color-vellum: #12181a;
-  --color-slate: #1c2326;
-  --color-stone: #2a3236;
-  --color-mist: #6b7572;
-  --color-bone: #a9b0ad;
-  --color-chalk: #d6d3c8;
-  --color-paper: #f2ebdd;
-  --color-accent: #5bcfa8;
-  --color-accent-deep: #2f9b7c;
+  --color-ink: #0e0e10;
+  --color-vellum: #151518;
+  --color-slate: #1c1c20;
+  --color-stone: #2a2a2f;
+  --color-mist: #6b6b73;
+  --color-bone: #a0a0a8;
+  --color-chalk: #d4d2cc;
+  --color-paper: #f4f2ed;
+  --color-accent: #a78bfa;
+  --color-accent-deep: #7c5cf5;
   --color-rust: #e07a64;
   --color-moss: #7fa680;
-  --color-hairline: rgb(255 255 255 / 0.09);
-  --color-hairline-strong: rgb(255 255 255 / 0.16);
+  --color-hairline: rgb(255 255 255 / 0.06);
+  --color-hairline-strong: rgb(255 255 255 / 0.12);
 
   /* ─── Font ─────────────────────────────────────────── */
   --font-display: 'Instrument Serif', 'Times New Roman', serif;
@@ -29,39 +29,39 @@
 /* ─── Themes ─────────────────────────────────────────── */
 :root,
 [data-theme='dark'] {
-  --color-ink: #0a0e0d;
-  --color-vellum: #12181a;
-  --color-slate: #1c2326;
-  --color-stone: #2a3236;
-  --color-mist: #6b7572;
-  --color-bone: #a9b0ad;
-  --color-chalk: #d6d3c8;
-  --color-paper: #f2ebdd;
-  --color-accent: #8da3b3;
-  --color-accent-deep: #5d7a8e;
+  --color-ink: #0e0e10;
+  --color-vellum: #151518;
+  --color-slate: #1c1c20;
+  --color-stone: #2a2a2f;
+  --color-mist: #6b6b73;
+  --color-bone: #a0a0a8;
+  --color-chalk: #d4d2cc;
+  --color-paper: #f4f2ed;
+  --color-accent: #a78bfa;
+  --color-accent-deep: #7c5cf5;
   --color-rust: #e07a64;
   --color-moss: #7fa680;
-  --color-hairline: rgb(255 255 255 / 0.09);
-  --color-hairline-strong: rgb(255 255 255 / 0.16);
+  --color-hairline: rgb(255 255 255 / 0.06);
+  --color-hairline-strong: rgb(255 255 255 / 0.12);
 
   color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --color-ink: #f5f0e3;
-  --color-vellum: #fdfaf0;
-  --color-slate: #ebe5d4;
-  --color-stone: #d3ccba;
-  --color-mist: #807a6e;
+  --color-ink: #faf8f4;
+  --color-vellum: #ffffff;
+  --color-slate: #f2efe8;
+  --color-stone: #e5e1d8;
+  --color-mist: #8a8780;
   --color-bone: #4a4842;
   --color-chalk: #2a2722;
   --color-paper: #14110c;
-  --color-accent: #3d556b;
-  --color-accent-deep: #26384a;
+  --color-accent: #6b46e5;
+  --color-accent-deep: #4b2fc4;
   --color-rust: #b9543b;
   --color-moss: #557856;
-  --color-hairline: rgb(20 17 12 / 0.10);
-  --color-hairline-strong: rgb(20 17 12 / 0.20);
+  --color-hairline: rgb(20 17 12 / 0.08);
+  --color-hairline-strong: rgb(20 17 12 / 0.16);
 
   color-scheme: light;
 }
@@ -82,7 +82,9 @@
     letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
   }
 
   ::selection {
@@ -164,11 +166,7 @@
 }
 
 .divider-dotted {
-  background-image: linear-gradient(
-    to right,
-    var(--color-hairline-strong) 50%,
-    transparent 50%
-  );
+  background-image: linear-gradient(to right, var(--color-hairline-strong) 50%, transparent 50%);
   background-size: 6px 1px;
   background-repeat: repeat-x;
   height: 1px;
@@ -186,7 +184,9 @@
   font-size: 0.95rem;
   letter-spacing: -0.01em;
   outline: none;
-  transition: border-color 0.2s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 .parley-input::placeholder {
   color: var(--color-mist);
@@ -225,7 +225,10 @@ textarea.parley-input:focus {
   padding: 0.7rem 1rem;
   border-radius: var(--radius-soft);
   border: 1px solid var(--color-paper);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   cursor: pointer;
 }
 .parley-button:hover {
@@ -254,7 +257,10 @@ textarea.parley-input:focus {
   border: 1px solid var(--color-hairline-strong);
   border-radius: var(--radius-soft);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 .parley-button-ghost:hover {
   border-color: var(--color-accent);
@@ -279,7 +285,9 @@ textarea.parley-input:focus {
   border: 1px solid color-mix(in oklab, var(--color-rust) 32%, transparent);
   border-radius: var(--radius-soft);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 .parley-button-danger:hover {
   background: color-mix(in oklab, var(--color-rust) 8%, transparent);
@@ -290,7 +298,9 @@ textarea.parley-input:focus {
   color: var(--color-paper);
   text-decoration: none;
   border-bottom: 1px solid var(--color-hairline-strong);
-  transition: border-color 0.2s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 .parley-link:hover {
   border-bottom-color: var(--color-accent);
@@ -309,7 +319,10 @@ textarea.parley-input:focus {
   color: var(--color-bone);
   background: transparent;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 .parley-icon-button:hover {
   color: var(--color-paper);
@@ -338,6 +351,14 @@ textarea.parley-input:focus {
 @keyframes drawer-in {
   from {
     transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes drawer-in-left {
+  from {
+    transform: translateX(-100%);
   }
   to {
     transform: translateX(0);
@@ -372,6 +393,9 @@ textarea.parley-input:focus {
 }
 .animate-drawer {
   animation: drawer-in 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-drawer-left {
+  animation: drawer-in-left 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .animate-modal {
   animation: modal-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;

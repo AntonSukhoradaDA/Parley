@@ -54,9 +54,7 @@ export interface RoomBan {
 export const listMyRooms = () => api<Room[]>('/api/rooms')
 
 export const listPublicRooms = (search?: string) =>
-  api<PublicRoom[]>(
-    '/api/rooms/public' + (search ? `?search=${encodeURIComponent(search)}` : ''),
-  )
+  api<PublicRoom[]>('/api/rooms/public' + (search ? `?search=${encodeURIComponent(search)}` : ''))
 
 export const getRoom = (id: string) => api<RoomDetail>(`/api/rooms/${id}`)
 
@@ -71,14 +69,11 @@ export const updateRoom = (
   input: { name?: string; description?: string; visibility?: RoomVisibility },
 ) => api<RoomDetail>(`/api/rooms/${id}`, { method: 'PATCH', body: input })
 
-export const deleteRoom = (id: string) =>
-  api<void>(`/api/rooms/${id}`, { method: 'DELETE' })
+export const deleteRoom = (id: string) => api<void>(`/api/rooms/${id}`, { method: 'DELETE' })
 
-export const joinRoom = (id: string) =>
-  api<unknown>(`/api/rooms/${id}/join`, { method: 'POST' })
+export const joinRoom = (id: string) => api<unknown>(`/api/rooms/${id}/join`, { method: 'POST' })
 
-export const leaveRoom = (id: string) =>
-  api<void>(`/api/rooms/${id}/leave`, { method: 'POST' })
+export const leaveRoom = (id: string) => api<void>(`/api/rooms/${id}/leave`, { method: 'POST' })
 
 export const inviteToRoom = (id: string, username: string) =>
   api<unknown>(`/api/rooms/${id}/invite`, {
@@ -86,8 +81,7 @@ export const inviteToRoom = (id: string, username: string) =>
     body: { username },
   })
 
-export const listMembers = (id: string) =>
-  api<RoomMember[]>(`/api/rooms/${id}/members`)
+export const listMembers = (id: string) => api<RoomMember[]>(`/api/rooms/${id}/members`)
 
 export const setAdmin = (id: string, userId: string, makeAdmin: boolean) =>
   api<void>(`/api/rooms/${id}/admins/${userId}`, {
@@ -100,8 +94,7 @@ export const banUser = (id: string, userId: string) =>
 export const unbanUser = (id: string, userId: string) =>
   api<void>(`/api/rooms/${id}/ban/${userId}`, { method: 'DELETE' })
 
-export const listBans = (id: string) =>
-  api<RoomBan[]>(`/api/rooms/${id}/bans`)
+export const listBans = (id: string) => api<RoomBan[]>(`/api/rooms/${id}/bans`)
 
 export const kickMember = (id: string, userId: string) =>
   api<void>(`/api/rooms/${id}/members/${userId}`, { method: 'DELETE' })

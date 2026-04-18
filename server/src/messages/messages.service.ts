@@ -46,7 +46,9 @@ export class MessagesService {
   private async assertNotFrozen(roomId: string) {
     if (!(await this.personalChats.isPersonalRoom(roomId))) return;
     if (await this.personalChats.checkBanBetweenMembers(roomId)) {
-      throw new ForbiddenException('This conversation is frozen due to a block');
+      throw new ForbiddenException(
+        'This conversation is frozen due to a block',
+      );
     }
   }
 
@@ -65,7 +67,9 @@ export class MessagesService {
     }
 
     if (replyToId) {
-      const parent = await this.prisma.message.findUnique({ where: { id: replyToId } });
+      const parent = await this.prisma.message.findUnique({
+        where: { id: replyToId },
+      });
       if (!parent || parent.roomId !== roomId) {
         throw new BadRequestException('Replied message not found in this room');
       }
@@ -83,10 +87,12 @@ export class MessagesService {
       }
       for (const a of found) {
         if (a.uploaderId !== senderId) {
-          throw new BadRequestException('Cannot use another user\'s attachment');
+          throw new BadRequestException("Cannot use another user's attachment");
         }
         if (a.roomId !== roomId) {
-          throw new BadRequestException('Attachment does not belong to this room');
+          throw new BadRequestException(
+            'Attachment does not belong to this room',
+          );
         }
         if (a.messageId) {
           throw new BadRequestException('Attachment already linked');
@@ -101,12 +107,22 @@ export class MessagesService {
       });
       if (attachmentIds.length) {
         await tx.attachment.updateMany({
-          where: { id: { in: attachmentIds }, messageId: null, uploaderId: senderId },
+          where: {
+            id: { in: attachmentIds },
+            messageId: null,
+            uploaderId: senderId,
+          },
           data: { messageId: message.id },
         });
         const attachments = await tx.attachment.findMany({
           where: { messageId: message.id },
-          select: { id: true, filename: true, mimetype: true, size: true, comment: true },
+          select: {
+            id: true,
+            filename: true,
+            mimetype: true,
+            size: true,
+            comment: true,
+          },
         });
         return { ...message, attachments };
       }
@@ -122,9 +138,12 @@ export class MessagesService {
       throw new BadRequestException('Message cannot be empty');
     }
 
-    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
     if (!msg) throw new NotFoundException('Message not found');
-    if (msg.senderId !== userId) throw new ForbiddenException('You can only edit your own messages');
+    if (msg.senderId !== userId)
+      throw new ForbiddenException('You can only edit your own messages');
 
     await this.assertNotFrozen(msg.roomId);
 
@@ -136,9 +155,12 @@ export class MessagesService {
   }
 
   async delete(messageId: string, userId: string, roomId: string) {
-    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
     if (!msg) throw new NotFoundException('Message not found');
-    if (msg.roomId !== roomId) throw new BadRequestException('Message not in this room');
+    if (msg.roomId !== roomId)
+      throw new BadRequestException('Message not in this room');
 
     // Author can always delete. Admins/owners can delete in their rooms.
     if (msg.senderId !== userId) {
@@ -160,9 +182,7 @@ export class MessagesService {
       select: MESSAGE_SELECT,
       orderBy: { createdAt: 'desc' },
       take: take + 1,
-      ...(cursor
-        ? { cursor: { id: cursor }, skip: 1 }
-        : {}),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
     const hasMore = messages.length > take;
