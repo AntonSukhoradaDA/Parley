@@ -135,10 +135,8 @@ See [`docs/wireframes.md`](./docs/wireframes.md) for full UI wireframes.
 
 ## Tech Stack
 
-> *Update this section to match your actual stack.*
-
-- **Backend:** [your choice — e.g. Node.js / Express, Python / FastAPI, Go, .NET]
-- **Frontend:** [your choice — e.g. React, Vue, vanilla JS]
+- **Backend:** Node.js
+- **Frontend:** React
 - **Realtime:** WebSockets
 - **Database:** PostgreSQL
 - **File storage:** Local filesystem (Docker volume)
