@@ -1,12 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 const unique = () => Math.random().toString(36).slice(2, 8);
 
-async function fillRegisterForm(page: any, email: string, username: string, password: string) {
+async function fillRegisterForm(
+  page: Page,
+  email: string,
+  username: string,
+  password: string,
+) {
   await page.goto('/register');
-  await page.fill('input[placeholder*="somewhere" i]', email);
-  await page.fill('input[placeholder*="how others" i]', username);
-  await page.fill('input[placeholder*="remember" i]', password);
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Username').fill(username);
+  await page.getByLabel('Password').fill(password);
 }
 
 test.describe('Authentication', () => {
@@ -16,45 +21,43 @@ test.describe('Authentication', () => {
 
   test('register a new account', async ({ page }) => {
     await fillRegisterForm(page, email, username, password);
-    await page.click('button:has-text("Open account")');
-    await expect(page).toHaveURL(/\/(chats)?$/, { timeout: 10_000 });
+    await page.getByRole('button', { name: /create account/i }).click();
+    await expect(page).toHaveURL(/\/chats$/, { timeout: 10_000 });
   });
 
   test('logout and login', async ({ page }) => {
     const u2 = `pw_login_${unique()}`;
     const e2 = `${u2}@test.com`;
 
-    // Register
+    // Register -> lands on /chats
     await fillRegisterForm(page, e2, u2, password);
-    await page.click('button:has-text("Open account")');
-    await expect(page).toHaveURL(/\/(chats)?$/, { timeout: 10_000 });
+    await page.getByRole('button', { name: /create account/i }).click();
+    await expect(page).toHaveURL(/\/chats$/, { timeout: 10_000 });
 
-    // Sign out via user menu
-    const sessionBtn = page.locator('button:has-text("In session"), button:has-text("session")').first();
-    if (await sessionBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await sessionBtn.click();
-    }
-    await page.click('button:has-text("Sign out"), button:has-text("sign out")', { timeout: 5_000 });
-    await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
+    // Direct "Sign out" action in the chat header
+    await page.getByRole('button', { name: /^sign out$/i }).first().click();
+    await expect(page).toHaveURL(/\/login$/, { timeout: 10_000 });
 
-    // Login
-    await page.fill('input[placeholder*="somewhere" i], input[type="email"]', e2);
-    await page.fill('input[type="password"]', password);
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/(chats)?$/, { timeout: 10_000 });
+    // Login with the same credentials
+    await page.getByLabel('Email').fill(e2);
+    await page.getByLabel('Password').fill(password);
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/\/chats$/, { timeout: 10_000 });
   });
 
   test('rejects invalid login', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[placeholder*="somewhere" i], input[type="email"]', 'nonexistent@test.com');
-    await page.fill('input[type="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
-    await expect(page.locator('text=/invalid|incorrect|credentials/i')).toBeVisible({ timeout: 5_000 });
+    await page.getByLabel('Email').fill('nonexistent@test.com');
+    await page.getByLabel('Password').fill('wrongpassword');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(
+      page.locator('text=/invalid|incorrect|credentials/i'),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test('login page links to register', async ({ page }) => {
     await page.goto('/login');
-    await page.click('a:has-text("account"), a:has-text("register"), a:has-text("Open")');
-    await expect(page).toHaveURL(/\/register/);
+    await page.getByRole('link', { name: /register/i }).click();
+    await expect(page).toHaveURL(/\/register$/);
   });
 });
