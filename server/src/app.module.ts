@@ -11,6 +11,7 @@ import { PersonalChatsModule } from './personal-chats/personal-chats.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { UsersModule } from './users/users.module';
+import { XmppModule } from './xmpp/xmpp.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     MessagesModule,
     PersonalChatsModule,
     AttachmentsModule,
+    XmppModule,
     ChatModule,
   ],
 })

@@ -10,6 +10,7 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { ChatPage } from '@/pages/ChatPage'
+import { AdminPage } from '@/pages/AdminPage'
 import { bootstrapSession } from '@/lib/auth'
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="/chats" element={<ChatPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

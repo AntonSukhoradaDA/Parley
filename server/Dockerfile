@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-RUN npm ci
+RUN npm install --no-audit --no-fund
 RUN npx prisma generate
 
 COPY . .
@@ -21,7 +21,7 @@ WORKDIR /app
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/prisma ./prisma/
 
-RUN npm ci --omit=dev
+RUN npm install --no-audit --no-fund --omit=dev --ignore-scripts=false
 RUN npx prisma generate
 
 COPY --from=builder /app/dist ./dist/

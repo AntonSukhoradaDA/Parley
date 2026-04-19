@@ -10,24 +10,43 @@ messages, friends, attachments, persistent history, moderation. See
 [README.md](./README.md) for the full end-user / developer overview.
 
 Stack: NestJS + Prisma + PostgreSQL backend, React 19 + Vite + Tailwind 4
-frontend, Socket.IO for real-time, Docker Compose for everything.
+frontend, Socket.IO for real-time, Prosody XMPP for federation, Docker
+Compose for everything.
 
 ## Run it
 
 ```bash
-docker compose up -d --build          # full stack on :8080
-docker compose up -d --build client   # client-only rebuild (fastest for UI work)
+docker compose up -d --build                              # full stack on :8080
+docker compose up -d --build client                       # client-only rebuild (fastest for UI work)
+docker compose -f docker-compose.federation.yml up -d     # two-stack federation harness (:8080 + :8081)
 ```
 
-App lives at **http://localhost:8080**. Mailpit at :8025.
+App lives at **http://localhost:8080**. Mailpit at :8025. Admin /
+federation dashboard at `/admin` (any signed-in user).
+
+**Port conflict:** the default compose and the federation compose both
+bind :8080. Run `docker compose down` before `docker compose -f
+docker-compose.federation.yml up`.
 
 ## Repository layout
 
 - `client/` — React SPA. Entry: `src/main.tsx` → `src/App.tsx` (routes).
 - `server/` — NestJS app, module-per-feature (`rooms`, `messages`, `auth`,
   `friends`, `chat` (WS gateway), `attachments`, `personal-chats`, `users`,
-  `mail`, `prisma`, `health`).
-- `docker-compose.yml` — db, server, client, mailhog.
+  `mail`, `prisma`, `health`, `xmpp` (federation bridge)).
+- `prosody/` — XMPP sidecar: `Dockerfile`, `entrypoint.sh` (generates
+  per-domain self-signed certs), `prosody.cfg.lua`, and three custom Lua
+  modules: `mod_auth_parley` (HTTP-backed c2s auth against Parley bcrypt
+  hashes), `mod_parley_forward` (duplicates c2s-originated chats to the
+  bridge component so the web UI stays in sync), `mod_parley_admin` (live
+  session list for the `/admin` dashboard).
+- `loadtest/` — Node drivers: `federation-loadtest.mjs` (cross-server
+  stress test), `c2s-login-test.mjs` (Jabber-client login smoke test via
+  `@xmpp/client`), `c2s-bridge-test.mjs` (end-to-end web ↔ Jabber
+  message flow).
+- `docker-compose.yml` — db, server, client, mailhog, prosody.
+- `docker-compose.federation.yml` — two-stack (A + B) cross-server
+  federation harness.
 - `INSTRUCTIONS.md` — product spec, incl. wireframes in Appendix A.
 - `DOCS.md`, `PLAN.MD` — background / planning.
 
@@ -36,6 +55,7 @@ App lives at **http://localhost:8080**. Mailpit at :8025.
 ### Routing
 - `/` → `LandingPage` (public; redirects to `/chats` if authenticated)
 - `/chats` → `ChatPage` (protected)
+- `/admin` → `AdminPage` (protected) — federation / XMPP bridge dashboard
 - `/login`, `/register`, `/forgot-password`, `/reset-password` — public-only
 - `/privacy`, `/terms` — legal (always public)
 
@@ -78,7 +98,7 @@ Settings-type surfaces (Profile, Contacts) are drawers; quick actions
 - `i18next` + `react-i18next`, config in `client/src/i18n/index.ts`.
 - Languages: `en`, `fr`, `es`. Resources in
   `client/src/i18n/locales/*.json`. Keys namespaced: `landing.*`, `auth.*`,
-  `chat.*`, `sidebar.*`, `nav.*`, `common.*`, `lang.*`.
+  `chat.*`, `sidebar.*`, `nav.*`, `common.*`, `lang.*`, `admin.*`.
 - Language persists in `localStorage` (`parley:lang`), falls back to
   navigator language then English.
 - Add new strings to **all three** locale files. English is the fallback;
@@ -102,6 +122,39 @@ Settings-type surfaces (Profile, Contacts) are drawers; quick actions
   `server/src/messages/messages.service.spec.ts` — a 100 000-message test
   that walks the full history page-by-page and asserts no gaps, no
   duplicates, terminates in `ceil(N / PAGE_SIZE)` pages.
+- **Shadow remote users**: remote XMPP peers are stored as `User` rows with
+  `isRemote = true` and `xmppJid` populated. Login, register,
+  forgot-password, and friend-request paths all reject these rows
+  explicitly. `User.email` and `User.passwordHash` are nullable to support
+  them. Don't assume `user.email` is non-null anywhere outside of
+  local-auth-gated paths.
+- **XMPP bridge addressing**: outbound stanzas emit from
+  `<user>@bridge.<domain>` (Prosody's XEP-0114 enforces components only
+  send from their own subdomain). Inbound strips the `bridge.` prefix
+  before resolving the shadow user. See `XmppConfig.routeViaPeerBridge`
+  and `XmppBridgeService.handleStanza`.
+- **Jabber-client c2s auth** reuses Parley's bcrypt hashes via the
+  `/api/xmpp/auth` callback (`XmppAuthController`). Prosody's
+  `mod_auth_parley` hits this endpoint for every SASL PLAIN attempt; no
+  shadow accounts are maintained in Prosody's storage. Any Parley
+  account can log in from any XMPP client without separate provisioning.
+- **c2s → web forwarding**: when a Jabber client sends a chat,
+  `mod_parley_forward` duplicates the stanza to the bridge component
+  with `to = <recipient>@bridge.<host>`. The bridge's inbound handler
+  then persists a Parley `Message` and broadcasts over Socket.IO.
+  Prosody stanzas use `.attr` (singular) — not `.attrs` — in Lua.
+- **Web → c2s delivery**: `ChatGateway.publishToXmpp` fans out to both
+  remote (via `sendDm` / `routeViaPeerBridge`) and local (via
+  `sendLocalDm` addressed to `<user>@<domain>`) recipients. Local
+  outbound stanzas include `urn:xmpp:hints/no-store` so Prosody's
+  offline storage doesn't duplicate history Parley already owns.
+- **Federated broadcast path**: `XmppInboundService` emits through a
+  `ChatBroadcaster` registered by `ChatGateway.onModuleInit`. The
+  broadcaster targets each room member's `user:<id>` Socket.IO channel
+  (always joined at connect), dedupes across members, and also pulls
+  each socket into `room:<id>` for future broadcasts. This handles the
+  case where a socket connected before a federated-inbound room was
+  materialized.
 
 ## Lint, format, typecheck
 
@@ -129,18 +182,35 @@ npm run lint                             # eslint --fix
 
 ## Docker build notes
 
-The client Dockerfile uses `npm install` (not `npm ci`). `npm ci` strict-
-checked optional platform deps and broke the mac → linux lockfile diff once
-we added i18n native transitive deps. If you change client deps, run
-`cd client && npm install` locally so the lockfile stays reasonable.
+Both client and server Dockerfiles use `npm install` (not `npm ci`).
+`npm ci` strict-checked optional platform deps and broke the
+mac → linux lockfile diff once we added i18n native transitive deps
+and again when adding `@xmpp/*` ESM packages. If you change deps, run
+`npm install` locally in the affected package so the lockfile stays
+reasonable.
+
+The Prosody sidecar is built from `prosody/Dockerfile` (Debian trixie
++ apt `prosody` 13 + `openssl`). Certs are generated per-domain on
+first boot by `entrypoint.sh`; persisted in the `prosodydata` volume.
+
+When rebuilding `server-*` containers under the federation compose,
+the client's nginx caches DNS for the `server` alias and will crash
+looping on "host not found in upstream `server`". Fix with
+`docker compose -f docker-compose.federation.yml up -d
+--force-recreate client-a client-b`.
 
 ## When in doubt
 
 1. Read `INSTRUCTIONS.md` for the product rules (unique usernames, unique
    room names, owner cannot leave, kick == ban unless spec says otherwise,
    AFK rules across tabs, etc.).
-2. Skim `docs/architecture.md` for backend topology and event catalog.
-3. Check the `README.md` structure table before renaming or moving files.
+2. Skim `docs/architecture.md` for backend topology, event catalog, and
+   the phase-10 federation flow (incl. c2s auth + custom Prosody modules).
+3. Check the `README.md` structure table before renaming or moving files;
+   its "Connecting from a Jabber client" subsection has the client setup
+   recipe for Beagle IM / Monal / Gajim.
+4. For federation questions, `DOCS.md §12` is the authoritative module
+   walkthrough; `loadtest/README.md` documents how to exercise s2s.
 
 ## What not to do
 

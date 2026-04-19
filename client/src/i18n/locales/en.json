@@ -20,7 +20,34 @@
     "sessions": "Sessions",
     "profile": "Profile",
     "openChats": "Open chats",
-    "home": "Home"
+    "home": "Home",
+    "admin": "Federation"
+  },
+  "admin": {
+    "title": "Federation dashboard",
+    "backToChat": "Back to chat",
+    "bridge": "XMPP bridge",
+    "status": "Status",
+    "online": "online",
+    "offline": "offline",
+    "disabled": "disabled",
+    "uptime": "Uptime",
+    "stanzasIn": "Stanzas in",
+    "stanzasOut": "Stanzas out",
+    "bytesIn": "Bytes in",
+    "bytesOut": "Bytes out",
+    "reconnects": "Reconnects",
+    "domain": "Domain",
+    "federation": "Federation peers",
+    "peerDomain": "Domain",
+    "lastSeen": "Last seen",
+    "noPeers": "No remote peers have exchanged traffic yet.",
+    "sessions": "Connected Jabber clients",
+    "sessionsUnavailable": "Prosody admin API is not reachable",
+    "noSessions": "No Jabber clients connected.",
+    "ip": "IP",
+    "since": "Connected since",
+    "recentErrors": "Recent errors"
   },
   "landing": {
     "header": {

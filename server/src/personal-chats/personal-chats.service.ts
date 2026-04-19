@@ -160,6 +160,63 @@ export class PersonalChatsService {
     };
   }
 
+  async openOrCreateByJid(userId: string, jid: string) {
+    const match = /^([^@/]+)@([^/]+)$/.exec(jid.trim());
+    if (!match) {
+      throw new BadRequestException('Invalid XMPP JID');
+    }
+    const [, local, domain] = match;
+
+    // Upsert the shadow remote user
+    let shadow = await this.prisma.user.findUnique({
+      where: { xmppJid: `${local}@${domain}` },
+    });
+    if (!shadow) {
+      shadow = await this.prisma.user.create({
+        data: {
+          username: `${local}@${domain}`.slice(0, 64),
+          isRemote: true,
+          xmppJid: `${local}@${domain}`,
+          remoteDomain: domain,
+        },
+      });
+    }
+    if (!shadow.isRemote) {
+      // Not a remote user - fall back to normal flow (requires friendship)
+      return this.openOrCreate(userId, shadow.id);
+    }
+
+    // Federated DM bypasses local friendship requirement
+    const existing = await this.prisma.room.findFirst({
+      where: {
+        isPersonal: true,
+        AND: [
+          { members: { some: { userId } } },
+          { members: { some: { userId: shadow.id } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (existing) return this.formatChat(existing.id, userId);
+
+    const created = await this.prisma.room.create({
+      data: {
+        name: `dm:${[userId, shadow.id].sort().join(':')}`,
+        isPersonal: true,
+        visibility: 'private',
+        ownerId: null,
+        members: {
+          create: [
+            { userId, role: RoomMemberRole.member },
+            { userId: shadow.id, role: RoomMemberRole.member },
+          ],
+        },
+      },
+      select: { id: true },
+    });
+    return this.formatChat(created.id, userId);
+  }
+
   async isPersonalRoom(roomId: string) {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },

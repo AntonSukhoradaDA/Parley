@@ -20,7 +20,34 @@
     "sessions": "Sesiones",
     "profile": "Perfil",
     "openChats": "Abrir chats",
-    "home": "Inicio"
+    "home": "Inicio",
+    "admin": "Federación"
+  },
+  "admin": {
+    "title": "Panel de federación",
+    "backToChat": "Volver al chat",
+    "bridge": "Puente XMPP",
+    "status": "Estado",
+    "online": "en línea",
+    "offline": "desconectado",
+    "disabled": "deshabilitado",
+    "uptime": "Tiempo activo",
+    "stanzasIn": "Stanzas entrantes",
+    "stanzasOut": "Stanzas salientes",
+    "bytesIn": "Bytes entrantes",
+    "bytesOut": "Bytes salientes",
+    "reconnects": "Reconexiones",
+    "domain": "Dominio",
+    "federation": "Pares federados",
+    "peerDomain": "Dominio",
+    "lastSeen": "Visto por última vez",
+    "noPeers": "Ningún par remoto ha intercambiado tráfico aún.",
+    "sessions": "Clientes Jabber conectados",
+    "sessionsUnavailable": "La API de admin de Prosody no está disponible",
+    "noSessions": "Sin clientes Jabber conectados.",
+    "ip": "IP",
+    "since": "Conectado desde",
+    "recentErrors": "Errores recientes"
   },
   "landing": {
     "header": {

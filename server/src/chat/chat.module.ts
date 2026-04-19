@@ -5,6 +5,7 @@ import { ChatGateway } from './chat.gateway';
 import { PresenceService } from './presence.service';
 import { MessagesModule } from '../messages/messages.module';
 import { RoomsModule } from '../rooms/rooms.module';
+import { XmppModule } from '../xmpp/xmpp.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RoomsModule } from '../rooms/rooms.module';
     }),
     MessagesModule,
     RoomsModule,
+    XmppModule,
   ],
   providers: [ChatGateway, PresenceService],
   exports: [PresenceService],
