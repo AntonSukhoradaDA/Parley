@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import {
@@ -200,6 +201,13 @@ export function ChatPage() {
                     </button>
                   ))}
                   <div className="border-t border-hairline mt-1 pt-1">
+                    <Link
+                      to="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="block w-full text-left px-4 py-2 text-sm text-bone hover:bg-slate hover:text-paper transition-colors"
+                    >
+                      {t('nav.admin')}
+                    </Link>
                     <button
                       type="button"
                       onClick={() => {

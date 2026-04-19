@@ -11,10 +11,14 @@ datasource db {
 
 model User {
   id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique
+  email        String?  @unique
   username     String   @unique
-  passwordHash String
+  passwordHash String?
   createdAt    DateTime @default(now())
+  // Federation
+  isRemote     Boolean  @default(false)
+  xmppJid      String?  @unique
+  remoteDomain String?
 
   sessions               Session[]
   ownedRooms             Room[]         @relation("RoomOwner")
@@ -86,6 +90,8 @@ model Room {
   isPersonal  Boolean        @default(false)
   ownerId     String?        @db.Uuid
   createdAt   DateTime       @default(now())
+  // Federation: MUC JID if this room has been mirrored to XMPP
+  xmppMucJid  String?        @unique
 
   owner       User?        @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   members     RoomMember[]
@@ -203,4 +209,17 @@ model UserBan {
 
   @@unique([blockerId, blockedId])
   @@map("user_bans")
+}
+
+// ─── Federation ──────────────────────────────────────────
+
+model FederationPeer {
+  id          String   @id @default(uuid()) @db.Uuid
+  domain      String   @unique
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  stanzasIn   Int      @default(0)
+  stanzasOut  Int      @default(0)
+
+  @@map("federation_peers")
 }

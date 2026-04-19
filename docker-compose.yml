@@ -22,6 +22,23 @@ services:
     ports:
       - "${MAILHOG_UI_PORT:-8025}:8025"
 
+  prosody:
+    build: ./prosody
+    restart: unless-stopped
+    environment:
+      XMPP_DOMAIN: ${XMPP_DOMAIN:-parley.local}
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_ADMIN_REST_SECRET: ${XMPP_ADMIN_REST_SECRET:-parley-admin-rest-secret}
+      XMPP_PEER_DOMAIN: ${XMPP_PEER_DOMAIN:-}
+      PARLEY_AUTH_URL: ${PARLEY_AUTH_URL:-http://server:3000/api/xmpp/auth}
+    ports:
+      - "${XMPP_C2S_PORT:-5222}:5222"
+      - "${XMPP_S2S_PORT:-5269}:5269"
+      - "${XMPP_COMPONENT_PORT:-5347}:5347"
+      - "${XMPP_ADMIN_REST_PORT:-5280}:5280"
+    volumes:
+      - prosodydata:/var/lib/prosody
+
   server:
     build:
       context: ./server
@@ -30,6 +47,8 @@ services:
       db:
         condition: service_healthy
       mailhog:
+        condition: service_started
+      prosody:
         condition: service_started
     environment:
       DATABASE_URL: postgresql://parley:parley@db:5432/parley
@@ -43,6 +62,15 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       MAIL_FROM: ${MAIL_FROM:-Parley <noreply@parley.local>}
       APP_URL: ${APP_URL:-http://localhost:8080}
+      XMPP_ENABLED: ${XMPP_ENABLED:-true}
+      XMPP_DOMAIN: ${XMPP_DOMAIN:-parley.local}
+      XMPP_COMPONENT_HOST: ${XMPP_COMPONENT_HOST:-prosody}
+      XMPP_COMPONENT_PORT: ${XMPP_COMPONENT_PORT_INTERNAL:-5347}
+      XMPP_COMPONENT_DOMAIN: ${XMPP_COMPONENT_DOMAIN:-bridge.parley.local}
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_MUC_DOMAIN: ${XMPP_MUC_DOMAIN:-conference.parley.local}
+      XMPP_ADMIN_REST_URL: ${XMPP_ADMIN_REST_URL:-http://prosody:5280/parley_admin}
+      XMPP_ADMIN_REST_SECRET: ${XMPP_ADMIN_REST_SECRET:-${XMPP_COMPONENT_SECRET:-parley-bridge-secret}}
     volumes:
       - uploads:/var/parley/files
     healthcheck:
@@ -71,3 +99,4 @@ services:
 volumes:
   pgdata:
   uploads:
+  prosodydata:

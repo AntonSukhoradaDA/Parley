@@ -57,7 +57,9 @@ export class AuthService {
 
   async login(email: string, password: string, ctx: SessionContext) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user || user.isRemote || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
     return this.issueTokens(user.id, ctx);
@@ -123,7 +125,7 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return; // Always succeed — don't leak which emails are registered
+    if (!user || user.isRemote || !user.email) return; // Always succeed — don't leak which emails are registered
 
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = this.hashResetToken(rawToken);
@@ -140,7 +142,7 @@ export class AuthService {
 
     const url = `${this.mail.appUrl()}/reset-password?token=${rawToken}`;
     await this.mail.send({
-      to: user.email,
+      to: user.email!,
       subject: 'Reset your Parley password',
       text:
         `Hi ${user.username},\n\n` +
@@ -185,7 +187,7 @@ export class AuthService {
 
   async changePassword(userId: string, current: string, next: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException();
+    if (!user || !user.passwordHash) throw new UnauthorizedException();
     const ok = await bcrypt.compare(current, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Current password is incorrect');
     const passwordHash = await bcrypt.hash(next, BCRYPT_ROUNDS);

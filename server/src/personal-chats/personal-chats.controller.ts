@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -21,6 +22,14 @@ export class PersonalChatsController {
   @Get()
   list(@CurrentUser() user: AuthUser) {
     return this.chats.list(user.id);
+  }
+
+  @Post('by-jid')
+  openOrCreateByJid(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { jid: string },
+  ) {
+    return this.chats.openOrCreateByJid(user.id, body.jid);
   }
 
   @Post(':userId')

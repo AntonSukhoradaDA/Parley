@@ -15,6 +15,7 @@ Parley is a web-based chat application supporting public and private rooms, one-
 - [Architecture](#architecture)
 - [Configuration](#configuration)
 - [Local Development](#local-development)
+- [XMPP Federation](#xmpp-federation)
 - [API Reference](#api-reference)
 - [Capacity and Performance](#capacity-and-performance)
 
@@ -39,8 +40,8 @@ That's it. Open **http://localhost:8080** in your browser. No external services,
 
 The first `docker compose up` will:
 1. Pull PostgreSQL 16 and Mailpit images
-2. Build the server (NestJS) and client (React + nginx) images
-3. Start all 4 services
+2. Build the server (NestJS), client (React + nginx), and Prosody (XMPP) images
+3. Start all 5 services
 4. Run database migrations automatically
 5. Serve the app on port 8080
 
@@ -62,6 +63,9 @@ docker compose down -v
 |---------|-----|-------------|
 | App | http://localhost:8080 | Main application |
 | Mail UI | http://localhost:8025 | Mailpit -- catches all outgoing emails (password resets) |
+| XMPP c2s | localhost:5222 | Prosody client-to-server port (reserved for federation) |
+| XMPP s2s | localhost:5269 | Prosody server-to-server port (reserved for federation) |
+| Federation dashboard | http://localhost:8080/admin | XMPP bridge stats, peers, recent errors (requires sign-in) |
 
 ---
 
@@ -118,6 +122,17 @@ docker compose down -v
 - Language auto-detects from browser on first visit, persists in `localStorage`, exposed via a switcher in every page header
 - `<html lang>` syncs to the active language automatically
 
+### XMPP Federation
+- Prosody sidecar speaks XEP-0114 with the NestJS server acting as an external component bridge
+- **Jabber-client c2s login**: users sign into any third-party XMPP client (Beagle IM, Monal, Gajim, Conversations, Dino, Psi...) as `<parley-username>@<domain>` with their Parley password. Auth runs through `mod_auth_parley`, which POSTs SASL attempts to the Parley server for bcrypt verification - no separate account provisioning in Prosody
+- **Two-way message bridging**: messages sent from the Parley web UI fan out to any online Jabber-client session; messages sent from a Jabber client are duplicated via `mod_parley_forward` to the bridge component, persisted as Parley `Message` rows, and broadcast over Socket.IO to the recipient's web UI
+- Cross-server DMs: any Parley user can message `alice@other-parley.local` via `POST /api/personal-chats/by-jid`; a shadow remote `User` row is auto-provisioned on first contact
+- Server-to-server (s2s) dialback between peers, per-domain self-signed certs generated at container start
+- Federation admin dashboard at `/admin` shows bridge status, stanzas in/out, per-peer traffic, recent errors, and a live list of connected Jabber clients (JID, IP, TLS, connect time) via `mod_parley_admin`
+- `docker-compose.federation.yml` harness spins up two full stacks (A and B) on the same host for local cross-server testing
+- Node-based load harness (`loadtest/federation-loadtest.mjs`) seeds users, provisions cross-server rooms, and reports p50/p95/p99 latency
+- Bundled smoke tests: `loadtest/c2s-login-test.mjs` (auth + online roundtrip) and `loadtest/c2s-bridge-test.mjs` (web↔Jabber end-to-end message flow)
+
 ---
 
 ## Tech Stack
@@ -138,6 +153,7 @@ docker compose down -v
 | **Lint / Format** | ESLint 9 (flat config) + Prettier 3 | |
 | **Containerization** | Docker + Docker Compose | |
 | **Web Server** | nginx (SPA + reverse proxy) | alpine |
+| **Federation** | Prosody (XMPP) + `@xmpp/component` bridge | Prosody 13 (Debian trixie) |
 
 ---
 
@@ -262,20 +278,45 @@ parley/
         users.controller.ts        #   Delete account, user-to-user bans
         users.module.ts
         users.service.ts           #   Profile, ban/unban logic
+      xmpp/                        # XMPP federation module (phase 10)
+        xmpp.config.ts             #   Env-backed config (domain, component host, secrets)
+        xmpp-bridge.service.ts     #   @xmpp/component connection, stanza send/receive
+        xmpp-inbound.service.ts    #   Resolves shadow users, persists remote messages
+        xmpp-stats.service.ts      #   In-memory stanza + peer counters
+        xmpp-admin.controller.ts   #   GET /api/admin/xmpp/{stats,sessions,federation}
+        xmpp-auth.controller.ts    #   POST /api/xmpp/auth (c2s SASL callback for Prosody)
+        xmpp-shims.d.ts            #   Ambient declarations for @xmpp/* ESM packages
+        xmpp.module.ts
       app.module.ts                # Root module (imports all feature modules)
       main.ts                      # Bootstrap (port, prefix, validation pipe)
     prisma/
-      schema.prisma                # Database schema (10 models)
+      schema.prisma                # Database schema (11 models, incl. FederationPeer)
       migrations/                  # Auto-generated SQL migrations
     Dockerfile                     # Multi-stage: build -> production node
+
+  prosody/                         # XMPP sidecar (Prosody 13)
+    Dockerfile                     # Debian trixie + prosody + openssl
+    entrypoint.sh                  # Generates per-domain self-signed certs on first boot
+    prosody.cfg.lua                # VirtualHost + bridge component + MUC + s2s config
+    mod_auth_parley.lua            # HTTP-backed SASL auth: calls /api/xmpp/auth on each c2s login
+    mod_parley_forward.lua         # Duplicates c2s-originated chats to the bridge component
+    mod_parley_admin.lua           # GET /parley_admin/sessions -- live c2s session list
+
+  loadtest/                        # Federation load-test harness
+    federation-loadtest.mjs        # socket.io-client driver; reports p50/p95/p99 latency
+    c2s-login-test.mjs             # Single Jabber-client login smoke test (@xmpp/client)
+    c2s-bridge-test.mjs            # End-to-end web <-> Jabber message flow test
+    package.json
+    README.md
 
   docs/
     architecture.md                # Detailed architecture diagrams and decisions
 
-  docker-compose.yml               # 4-service orchestration
+  docker-compose.yml               # 5-service orchestration (db + mailpit + prosody + server + client)
+  docker-compose.federation.yml    # Two-stack harness (a/b) for cross-server federation testing
   .env.example                     # Environment variable template
   INSTRUCTIONS.md                  # Original product requirements
-  PLAN.MD                          # Implementation plan (9 phases)
+  PLAN.MD                          # Implementation plan (10 phases, all complete)
 ```
 
 ---
@@ -309,6 +350,9 @@ NestJS Server (REST API + Socket.IO Gateway)
     +---> PostgreSQL 16 (data)
     +---> Local filesystem (uploaded files)
     +---> Mailpit (dev email)
+    +---> Prosody (XMPP component bridge via XEP-0114)
+              |
+              +---> other Parley Prosody (s2s / dialback) for federation
 ```
 
 ### Key Design Decisions
@@ -324,6 +368,14 @@ NestJS Server (REST API + Socket.IO Gateway)
 5. **File access control at API level** -- Files stored with UUID names. Downloads go through an authenticated endpoint that verifies room membership.
 
 6. **Socket.IO rooms for broadcasting** -- Each chat room maps to a Socket.IO room. Efficient broadcasting without iterating connected clients.
+
+7. **XMPP as a component bridge, not a gateway** -- Parley doesn't provision c2s accounts on Prosody for every user. The NestJS server speaks to Prosody as an external component (XEP-0114). Outbound stanzas are emitted from `<username>@bridge.<domain>` (Prosody enforces components send only from their own subdomain). Remote senders addressed to `<username>@bridge.<peer-domain>` are delivered via s2s and handed back to the peer's bridge component, which looks up the local user and persists a `Message` row -- broadcasting it over Socket.IO just like a native send.
+
+8. **Shadow users for remote peers** -- Remote XMPP senders are stored as regular `User` rows with `isRemote = true` and a populated `xmppJid`. Login / registration / friend request paths reject rows flagged remote, but message, room-member, and attachment foreign keys all continue to reference `User` without per-call special-casing.
+
+9. **Jabber-client c2s auth reuses Parley's bcrypt hashes** -- instead of duplicating user accounts into Prosody's internal storage, a custom Prosody auth module (`mod_auth_parley`) turns every SASL PLAIN attempt into an HTTP POST to `/api/xmpp/auth`. The server does the same bcrypt compare used by web login. Changing a password on the web instantly propagates to Jabber clients on next reconnect; no sync logic is needed.
+
+10. **c2s -> bridge duplication for two-way message flow** -- `mod_parley_forward` attaches a `stanzas/in` filter to every authenticated c2s session. Each outgoing chat message is cloned with `to=<recipient>@bridge.<domain>` and submitted alongside the original. The bridge component receives the clone through its inbound pipeline, persists a `Message` row, and fans out to the recipient's Socket.IO sockets. The original still flows through normal Prosody routing to any c2s Jabber sessions.
 
 ---
 
@@ -343,14 +395,27 @@ Copy `.env.example` to `.env` and adjust as needed. For local development, the d
 | `SMTP_PASS` | (empty) | SMTP auth password |
 | `SMTP_SECURE` | `false` | Use TLS for SMTP |
 | `MAIL_FROM` | `Parley <noreply@parley.local>` | Sender address |
+| `XMPP_ENABLED` | `true` | Master switch for the XMPP bridge |
+| `XMPP_DOMAIN` | `parley.local` | Primary XMPP virtual host (user JIDs are `<username>@$XMPP_DOMAIN`) |
+| `XMPP_COMPONENT_HOST` | `prosody` | Prosody hostname the bridge connects to |
+| `XMPP_COMPONENT_PORT` | `5347` | Component port (XEP-0114) |
+| `XMPP_COMPONENT_DOMAIN` | `bridge.$XMPP_DOMAIN` | JID of the external component |
+| `XMPP_COMPONENT_SECRET` | `parley-bridge-secret` | Shared secret with Prosody. **Override in production** |
+| `XMPP_MUC_DOMAIN` | `conference.$XMPP_DOMAIN` | MUC service domain (reserved; groupchat federation is opportunistic) |
+| `XMPP_PEER_DOMAIN` | (empty) | When set, the peer's domain is allow-listed for insecure s2s in Prosody (dev) |
+| `XMPP_C2S_PORT` / `XMPP_S2S_PORT` / `XMPP_ADMIN_REST_PORT` | `5222` / `5269` / `5280` | Host ports exposed by Prosody |
+| `PARLEY_AUTH_URL` | `http://server:3000/api/xmpp/auth` | Where Prosody's `mod_auth_parley` POSTs SASL attempts for bcrypt verification |
+| `XMPP_ADMIN_REST_URL` | `http://prosody:5280/parley_admin` | Where the server fetches live c2s sessions for the admin dashboard (served by `mod_parley_admin`) |
 
 ### Production Checklist
 
 1. Set a strong `JWT_SECRET` (`openssl rand -hex 48`)
-2. Point `SMTP_*` at your real SMTP relay
-3. Set `APP_URL` to your public domain
-4. Consider removing the `mailhog` service
-5. Remove the `db` port mapping (no need to expose PostgreSQL)
+2. Set a strong `XMPP_COMPONENT_SECRET` (`openssl rand -hex 32`) or disable federation via `XMPP_ENABLED=false`
+3. Point `SMTP_*` at your real SMTP relay
+4. Set `APP_URL` to your public domain
+5. Replace the per-domain self-signed Prosody certs with a real cert chain if you want s2s with strangers. The dev entrypoint.sh regenerates self-signed certs per domain; for production, mount a proper keypair into `/var/lib/prosody/certs/<domain>.{crt,key}` and set stricter `ssl.verify` in `prosody.cfg.lua`
+6. Consider removing the `mailhog` service
+7. Remove the `db` port mapping (no need to expose PostgreSQL)
 
 ---
 
@@ -430,6 +495,119 @@ npx prisma migrate reset
 
 ---
 
+## XMPP Federation
+
+Federation is shipped as phase 10 of the [PLAN.MD](./PLAN.MD) and is enabled
+by default. When `XMPP_ENABLED=true` (default), the NestJS server opens an
+XEP-0114 component connection to the Prosody sidecar at startup. Every outbound
+message to a remote `User` is also emitted as an XMPP `<message>` stanza; every
+inbound stanza from s2s is materialized into a local `Message` row and
+broadcast over Socket.IO.
+
+### Federation quick-test (two stacks on one host)
+
+```bash
+# Bring the single-node stack down if it's already using :8080
+docker compose down
+
+# Bring up side A (:8080) and side B (:8081)
+docker compose -f docker-compose.federation.yml up --build
+```
+
+Then:
+
+1. Register a user on each side (e.g. `alice` on A, `bob` on B)
+2. On A, open the admin menu and click **Federation** to land on `/admin`
+3. Start a cross-server DM:
+   ```bash
+   curl -X POST http://localhost:8080/api/personal-chats/by-jid \
+     -H "Authorization: Bearer <alice's access token>" \
+     -H 'Content-Type: application/json' \
+     -d '{ "jid": "bob@parley-b.local" }'
+   ```
+   This creates a shadow `User` row for Bob on side A and opens a personal
+   chat room between Alice and the shadow.
+4. Send a message in that chat from Alice's account; Bob's side B session
+   receives `message:new` via its own bridge's inbound path, with the sender
+   resolved to a shadow user representing `alice@parley-a.local`.
+
+### Load test
+
+```bash
+cd loadtest
+npm install
+node federation-loadtest.mjs \
+  --side-a-url=http://localhost:8080 \
+  --side-b-url=http://localhost:8081 \
+  --side-a-domain=parley-a.local \
+  --side-b-domain=parley-b.local \
+  --count=50 --messages=100
+```
+
+Seeds `count` users on each side, waits for both bridges to come online,
+provisions `count` cross-server rooms via `/api/personal-chats/by-jid`, then
+fires `count x messages` cross-server DMs. Output includes throughput and
+p50/p95/p99 latency. Moderate load (10 x 20) delivers 100% with sub-second
+latency on a laptop; heavy load (50 x 100) exercises Prisma's connection pool
+and exposes it as the main bottleneck.
+
+### Admin endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/xmpp/stats` | Bridge state, counters, uptime, recent errors |
+| GET | `/api/admin/xmpp/sessions` | Live c2s session list from `mod_parley_admin` (JID, IP, TLS, connect time) |
+| GET | `/api/admin/xmpp/federation` | Per-peer stanza totals, merged with persisted `FederationPeer` rows |
+
+All three require an authenticated JWT. The `/admin` page polls them every
+3 seconds.
+
+### Connecting from a Jabber client
+
+Any standard XMPP client can log in with a Parley account's credentials -
+there is no separate XMPP password. The `mod_auth_parley` module forwards
+SASL PLAIN attempts to `/api/xmpp/auth`, which verifies the password
+against the user's bcrypt hash in the Parley DB.
+
+Client settings (e.g. Beagle IM / Monal / Gajim / Conversations):
+
+- **JID**: `<parley-username>@parley.local` (or `parley-a.local` / `parley-b.local` in the federation compose)
+- **Password**: your Parley password
+- **Server / Host**: `localhost`
+- **Port**: `5222` (side A) or `5223` (side B, federation compose only)
+- **Use direct TLS**: off (STARTTLS on port 5222)
+- **Accept self-signed certificates**: on (or trust the cert manually)
+
+Macs running strict clients like Beagle IM benefit from:
+
+```bash
+# Resolve the XMPP domain locally
+echo "127.0.0.1 parley.local parley-a.local parley-b.local" | sudo tee -a /etc/hosts
+
+# Trust the Prosody self-signed cert
+docker exec parley-prosody-a-1 cat /var/lib/prosody/certs/parley-a.local.crt > /tmp/parley-a.crt
+open /tmp/parley-a.crt   # Keychain Access -> double-click -> Trust -> Always Trust
+```
+
+Once connected, messages flow both ways:
+
+- DMs sent from the Jabber client to another Parley user appear in the recipient's web UI in real time and are persisted in the Parley DB
+- DMs sent from the web UI are delivered to the recipient's Jabber-client session via Prosody c2s if they're online
+
+Two bundled smoke tests live in `loadtest/`:
+
+```bash
+# Single login against Parley-auth-backed c2s
+node loadtest/c2s-login-test.mjs \
+  --host=localhost --domain=parley-a.local \
+  --user=<username> --password=<password>
+
+# Two-way bridge flow (Alice web -> Bob XMPP, Bob XMPP -> Alice web)
+node loadtest/c2s-bridge-test.mjs
+```
+
+---
+
 ## API Reference
 
 All endpoints are prefixed with `/api`. Protected endpoints require `Authorization: Bearer <token>`.
@@ -445,8 +623,10 @@ Full endpoint documentation with payloads and WebSocket events is in [`docs/arch
 | Messages | `/api/rooms/:roomId/messages` | Paginated history |
 | Friends | `/api/friends` | list, requests, send, accept, reject, remove |
 | Users | `/api/users` | delete account, ban/unban users |
-| Personal Chats | `/api/personal-chats` | list DMs, open DM |
+| Personal Chats | `/api/personal-chats` | list DMs, open DM by user id, open DM by remote JID |
 | Attachments | `/api/attachments` | upload, download |
+| Admin (XMPP) | `/api/admin/xmpp` | stats, sessions, federation |
+| XMPP auth | `/api/xmpp/auth` | internal - called by Prosody `mod_auth_parley` to verify Jabber-client SASL attempts |
 | Health | `/api/health` | service health check |
 
 ### WebSocket

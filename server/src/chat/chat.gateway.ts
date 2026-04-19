@@ -1,3 +1,4 @@
+import { OnModuleInit } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -13,6 +14,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MessagesService } from '../messages/messages.service';
 import { RoomsService } from '../rooms/rooms.service';
 import { PresenceService, type PresenceStatus } from './presence.service';
+import { XmppBridgeService } from '../xmpp/xmpp-bridge.service';
+import { XmppInboundService } from '../xmpp/xmpp-inbound.service';
+import { XmppConfig } from '../xmpp/xmpp.config';
 
 interface AuthSocket extends Socket {
   userId: string;
@@ -20,7 +24,9 @@ interface AuthSocket extends Socket {
 }
 
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
   @WebSocketServer()
   server!: Server;
 
@@ -30,7 +36,41 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly messages: MessagesService,
     private readonly rooms: RoomsService,
     private readonly presence: PresenceService,
+    private readonly xmppBridge: XmppBridgeService,
+    private readonly xmppInbound: XmppInboundService,
+    private readonly xmppCfg: XmppConfig,
   ) {}
+
+  onModuleInit() {
+    // Let the XMPP inbound handler broadcast into Socket.IO rooms
+    this.xmppInbound.registerBroadcaster({
+      emitRoomMessage: (roomId, memberUserIds, message) => {
+        // For federated inbound: sockets may have connected before this
+        // room existed, so they aren't yet in `room:<id>`. Emit via each
+        // member's `user:<id>` channel (always joined on connect) and also
+        // pull them into the room for future broadcasts.
+        const seenSockets = new Set<string>();
+        for (const uid of memberUserIds) {
+          const sockets = this.server.sockets.adapter.rooms.get(`user:${uid}`);
+          if (!sockets) continue;
+          for (const sid of sockets) {
+            if (seenSockets.has(sid)) continue;
+            seenSockets.add(sid);
+            const s = this.server.sockets.sockets.get(sid);
+            if (!s) continue;
+            s.join(`room:${roomId}`);
+            s.emit('message:new', message);
+          }
+        }
+      },
+      emitUnreadBump: (roomId, excludeUserId) => {
+        this.server
+          .to(`room:${roomId}`)
+          .except(`user:${excludeUserId}`)
+          .emit('unread:bump', { roomId });
+      },
+    });
+  }
 
   /* ─── Connection lifecycle ─────────────────────────── */
 
@@ -154,6 +194,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           roomId: data.roomId,
         });
 
+      // Fire-and-forget federation bridge (don't block the sender).
+      void this.publishToXmpp(message, client.username).catch(() => {});
+
       return { ok: true, message };
     } catch (err: any) {
       return { error: err.message ?? 'Failed to send message' };
@@ -230,6 +273,71 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /* ─── Helpers ──────────────────────────────────────── */
+
+  private async publishToXmpp(
+    message: { id: string; roomId: string; content: string },
+    senderUsername: string,
+  ) {
+    if (!this.xmppCfg.enabled) return;
+    const members = await this.prisma.roomMember.findMany({
+      where: { roomId: message.roomId },
+      select: {
+        user: {
+          select: {
+            id: true,
+            isRemote: true,
+            xmppJid: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    const recipients = members
+      .map((m) => m.user)
+      .filter((u) => u.username !== senderUsername);
+
+    if (recipients.length === 0) return;
+
+    const room = await this.prisma.room.findUnique({
+      where: { id: message.roomId },
+      select: { isPersonal: true },
+    });
+    const payload = {
+      id: message.id,
+      roomId: message.roomId,
+      content: message.content,
+      senderUsername,
+    };
+
+    if (room?.isPersonal) {
+      // DM: route per-recipient. Remote goes via the peer's bridge;
+      // local goes via Prosody to the recipient's c2s Jabber session.
+      for (const u of recipients) {
+        if (u.isRemote && u.xmppJid) {
+          await this.xmppBridge.sendDm(senderUsername, u.xmppJid, payload);
+        } else if (!u.isRemote) {
+          await this.xmppBridge.sendLocalDm(
+            senderUsername,
+            u.username,
+            payload,
+          );
+        }
+      }
+    } else {
+      const remoteJids = recipients
+        .filter((u) => u.isRemote && u.xmppJid)
+        .map((u) => u.xmppJid as string);
+      if (remoteJids.length > 0) {
+        await this.xmppBridge.sendMuc(
+          senderUsername,
+          message.roomId,
+          payload,
+          remoteJids,
+        );
+      }
+    }
+  }
 
   private async broadcastPresence(userId: string, status: PresenceStatus) {
     // Find all rooms this user belongs to and broadcast to those rooms

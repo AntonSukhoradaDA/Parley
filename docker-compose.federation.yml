@@ -1,0 +1,174 @@
+# Two-stack federation test harness.
+# Usage:
+#   docker compose -f docker-compose.federation.yml up --build
+# Side A: http://localhost:8080  (parley-a.local)
+# Side B: http://localhost:8081  (parley-b.local)
+#
+# Each stack has its own private network (stack-a / stack-b) so the nginx
+# client can reach "server" by alias. A third network (fednet) links the two
+# Prosody containers for s2s federation.
+
+services:
+  db-a:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: parley
+      POSTGRES_USER: parley
+      POSTGRES_PASSWORD: parley
+    volumes:
+      - pgdata-a:/var/lib/postgresql/data
+    networks: [stack-a]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parley"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db-b:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: parley
+      POSTGRES_USER: parley
+      POSTGRES_PASSWORD: parley
+    volumes:
+      - pgdata-b:/var/lib/postgresql/data
+    networks: [stack-b]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parley"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prosody-a:
+    build: ./prosody
+    restart: unless-stopped
+    environment:
+      XMPP_DOMAIN: parley-a.local
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_ADMIN_REST_SECRET: ${XMPP_ADMIN_REST_SECRET:-parley-admin-rest-secret}
+      XMPP_PEER_DOMAIN: parley-b.local
+      PARLEY_AUTH_URL: http://server:3000/api/xmpp/auth
+    ports:
+      - "5222:5222"    # Jabber-client c2s for side A
+    volumes:
+      - prosody-a:/var/lib/prosody
+    networks:
+      stack-a: {}
+      fednet:
+        aliases:
+          - parley-a.local
+          - bridge.parley-a.local
+          - conference.parley-a.local
+
+  prosody-b:
+    build: ./prosody
+    restart: unless-stopped
+    environment:
+      XMPP_DOMAIN: parley-b.local
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_ADMIN_REST_SECRET: ${XMPP_ADMIN_REST_SECRET:-parley-admin-rest-secret}
+      XMPP_PEER_DOMAIN: parley-a.local
+      PARLEY_AUTH_URL: http://server:3000/api/xmpp/auth
+    ports:
+      - "5223:5222"    # Jabber-client c2s for side B
+    volumes:
+      - prosody-b:/var/lib/prosody
+    networks:
+      stack-b: {}
+      fednet:
+        aliases:
+          - parley-b.local
+          - bridge.parley-b.local
+          - conference.parley-b.local
+
+  server-a:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      db-a: { condition: service_healthy }
+      prosody-a: { condition: service_started }
+    environment:
+      DATABASE_URL: postgresql://parley:parley@db-a:5432/parley
+      JWT_SECRET: ${JWT_SECRET:-parley-dev-secret-change-in-production}
+      PORT: "3000"
+      FILES_DIR: /var/parley/files
+      APP_URL: http://localhost:8080
+      XMPP_ENABLED: "true"
+      XMPP_DOMAIN: parley-a.local
+      XMPP_COMPONENT_HOST: prosody-a
+      XMPP_COMPONENT_PORT: "5347"
+      XMPP_COMPONENT_DOMAIN: bridge.parley-a.local
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_MUC_DOMAIN: conference.parley-a.local
+      XMPP_ADMIN_REST_URL: http://prosody-a:5280/parley_admin
+      XMPP_ADMIN_REST_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+    volumes:
+      - uploads-a:/var/parley/files
+    networks:
+      stack-a:
+        aliases: [server]
+
+  server-b:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      db-b: { condition: service_healthy }
+      prosody-b: { condition: service_started }
+    environment:
+      DATABASE_URL: postgresql://parley:parley@db-b:5432/parley
+      JWT_SECRET: ${JWT_SECRET:-parley-dev-secret-change-in-production}
+      PORT: "3000"
+      FILES_DIR: /var/parley/files
+      APP_URL: http://localhost:8081
+      XMPP_ENABLED: "true"
+      XMPP_DOMAIN: parley-b.local
+      XMPP_COMPONENT_HOST: prosody-b
+      XMPP_COMPONENT_PORT: "5347"
+      XMPP_COMPONENT_DOMAIN: bridge.parley-b.local
+      XMPP_COMPONENT_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+      XMPP_MUC_DOMAIN: conference.parley-b.local
+      XMPP_ADMIN_REST_URL: http://prosody-b:5280/parley_admin
+      XMPP_ADMIN_REST_SECRET: ${XMPP_COMPONENT_SECRET:-parley-bridge-secret}
+    volumes:
+      - uploads-b:/var/parley/files
+    networks:
+      stack-b:
+        aliases: [server]
+
+  client-a:
+    build:
+      context: ./client
+    restart: unless-stopped
+    depends_on: [server-a]
+    ports:
+      - "8080:80"
+    networks: [stack-a]
+
+  client-b:
+    build:
+      context: ./client
+    restart: unless-stopped
+    depends_on: [server-b]
+    ports:
+      - "8081:80"
+    networks: [stack-b]
+
+networks:
+  stack-a:
+    driver: bridge
+  stack-b:
+    driver: bridge
+  fednet:
+    driver: bridge
+
+volumes:
+  pgdata-a:
+  pgdata-b:
+  prosody-a:
+  prosody-b:
+  uploads-a:
+  uploads-b:
