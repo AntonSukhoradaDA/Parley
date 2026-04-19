@@ -57,6 +57,27 @@ To also remove persistent data (database + uploaded files):
 docker compose down -v
 ```
 
+### Two compose files, two purposes
+
+The repo ships **two** compose files. They are independent -- know which one
+you're running, because `docker compose down` only acts on the file it
+matches.
+
+| File | Purpose | When to use |
+|------|---------|-------------|
+| `docker-compose.yml` | **The project.** Single-node Parley with the full XMPP bridge (server + Prosody sidecar + db + mailpit + client) on port 8080. This is what the spec means by "runnable with `docker compose up`". | Normal development and day-to-day use. |
+| `docker-compose.federation.yml` | **Test harness for phase-10 federation.** Brings up two full Parley stacks (side A on :8080 / :5222, side B on :8081 / :5223) connected by s2s so you can exercise cross-server DMs and the `loadtest/federation-loadtest.mjs` script. | Only when you want to demo or load-test XMPP federation between two Parley servers. |
+
+To stop the right stack, pass the file explicitly:
+
+```bash
+docker compose down                                          # default stack
+docker compose -f docker-compose.federation.yml down         # federation harness
+docker compose -f docker-compose.federation.yml down -v      # plus volumes
+```
+
+Never run both at the same time -- they both try to bind host port 8080.
+
 ### Available Services
 
 | Service | URL | Description |
